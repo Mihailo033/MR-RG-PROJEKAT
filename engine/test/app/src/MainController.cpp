@@ -6,13 +6,9 @@
 #include <app/GUIController.hpp>
 
 namespace engine::test::app {
-void MainPlatformEventObserver::on_key(engine::platform::Key key) {
-    spdlog::info("Keyboard event: key={}, state={}", key.name(), key.state_str());
-}
+void MainPlatformEventObserver::on_key(engine::platform::Key key) { spdlog::info("Keyboard event: key={}, state={}", key.name(), key.state_str()); }
 
-void MainPlatformEventObserver::on_mouse_move(engine::platform::MousePosition position) {
-    spdlog::info("MousePosition: {} {}", position.x, position.y);
-}
+void MainPlatformEventObserver::on_mouse_move(engine::platform::MousePosition position) { spdlog::info("MousePosition: {} {}", position.x, position.y); }
 
 void MainController::initialize() {
     // User initialization
@@ -26,9 +22,7 @@ void MainController::initialize() {
 bool MainController::loop() {
     const auto platform = engine::core::Controller::get<engine::platform::PlatformController>();
     if (platform->key(engine::platform::KeyId::KEY_ESCAPE)
-                .state() == engine::platform::Key::State::JustPressed) {
-        return false;
-    }
+                .state() == engine::platform::Key::State::JustPressed) { return false; }
     return true;
 }
 
@@ -41,22 +35,16 @@ void MainController::poll_events() {
     }
 }
 
-void MainController::update() {
-    update_camera();
-}
+void MainController::update() { update_camera(); }
 
-void MainController::begin_draw() {
-    engine::graphics::OpenGL::clear_buffers();
-}
+void MainController::begin_draw() { engine::graphics::OpenGL::clear_buffers(); }
 
 void MainController::draw() {
     draw_backpack();
     draw_skybox();
 }
 
-void MainController::end_draw() {
-    engine::core::Controller::get<engine::platform::PlatformController>()->swap_buffers();
-}
+void MainController::end_draw() { engine::core::Controller::get<engine::platform::PlatformController>()->swap_buffers(); }
 
 void MainController::draw_backpack() {
     auto graphics = engine::core::Controller::get<engine::graphics::GraphicsController>();
@@ -78,32 +66,24 @@ void MainController::draw_skybox() {
 
 void MainController::update_camera() {
     auto gui = engine::core::Controller::get<GUIController>();
-    if (gui->is_enabled()) {
-        return;
-    }
+    if (gui->is_enabled()) { return; }
     auto platform = engine::core::Controller::get<engine::platform::PlatformController>();
     auto camera = engine::core::Controller::get<engine::graphics::GraphicsController>()->camera();
     float dt = platform->dt();
-    if (platform->key(engine::platform::KEY_W)
-                .state() == engine::platform::Key::State::Pressed) {
-        camera->move_camera(engine::graphics::Camera::Movement::FORWARD, dt);
-    }
-    if (platform->key(engine::platform::KEY_S)
-                .state() == engine::platform::Key::State::Pressed) {
-        camera->move_camera(engine::graphics::Camera::Movement::BACKWARD, dt);
-    }
-    if (platform->key(engine::platform::KEY_A)
-                .state() == engine::platform::Key::State::Pressed) {
-        camera->move_camera(engine::graphics::Camera::Movement::LEFT, dt);
-    }
-    if (platform->key(engine::platform::KEY_D)
-                .state() == engine::platform::Key::State::Pressed) {
-        camera->move_camera(engine::graphics::Camera::Movement::RIGHT, dt);
-    }
+
+    if (platform->key(engine::platform::KEY_W).state() == engine::platform::Key::State::Pressed) { camera->move_camera(engine::graphics::Camera::Movement::FORWARD, dt); }
+    if (platform->key(engine::platform::KEY_S).state() == engine::platform::Key::State::Pressed) { camera->move_camera(engine::graphics::Camera::Movement::BACKWARD, dt); }
+    if (platform->key(engine::platform::KEY_A).state() == engine::platform::Key::State::Pressed) { camera->move_camera(engine::graphics::Camera::Movement::LEFT, dt); }
+    if (platform->key(engine::platform::KEY_D).state() == engine::platform::Key::State::Pressed) { camera->move_camera(engine::graphics::Camera::Movement::RIGHT, dt); }
+    // Dodaj vertikalno kretanje:
+    if (platform->key(engine::platform::KEY_E).state() == engine::platform::Key::State::Pressed) { camera->move_camera(engine::graphics::Camera::Movement::UP, dt); }
+    if (platform->key(engine::platform::KEY_Q).state() == engine::platform::Key::State::Pressed) { camera->move_camera(engine::graphics::Camera::Movement::DOWN, dt); }
+
     auto mouse = platform->mouse();
     camera->rotate_camera(mouse.dx, mouse.dy);
     camera->zoom(mouse.scroll);
 }
+
 }
 
 
