@@ -10,6 +10,7 @@
   "window": {
     "height": 600,
     "title": "Hello, window!",
-    "width": 800
+    "width": 800,
+    "fullscreen": false
   }
 }
