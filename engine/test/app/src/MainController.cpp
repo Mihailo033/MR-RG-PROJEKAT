@@ -54,7 +54,16 @@ void MainController::draw_backpack() {
     shader->set_mat4("projection", graphics->projection_matrix());
     shader->set_mat4("view", graphics->camera()
                                      ->view_matrix());
-    shader->set_mat4("model", scale(glm::mat4(1.0f), glm::vec3(m_backpack_scale)));
+    glm::mat4 model = glm::mat4(1.0f);
+
+    // Pomeramo ranac na -5.0f na Z osi da bude „dalje od kamere“
+    model = glm::translate(model, glm::vec3(0.0f, 0.0f, -7.0f));
+    // Zatim ga skaliramo
+    model = glm::scale(model, glm::vec3(m_backpack_scale));
+    // Prosledimo konačnu matricu šejderu
+    shader->use();
+    shader->set_mat4("model", model);
+
     backpack->draw(shader);
 }
 
