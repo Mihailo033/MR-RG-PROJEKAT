@@ -48,22 +48,39 @@ void MainController::end_draw() { engine::core::Controller::get<engine::platform
 
 void MainController::draw_backpack() {
     auto graphics = engine::core::Controller::get<engine::graphics::GraphicsController>();
-    auto shader = engine::core::Controller::get<engine::resources::ResourcesController>()->shader("basic");
+    // Učitaj novi shader (koji se nalazi u resources/shaders/point_light.glsl)
+    auto shader = engine::core::Controller::get<engine::resources::ResourcesController>()->shader("point_light");
     auto backpack = engine::core::Controller::get<engine::resources::ResourcesController>()->model("backpack");
+
+    // Prvo postavi projection i view matricu
     shader->use();
     shader->set_mat4("projection", graphics->projection_matrix());
-    shader->set_mat4("view", graphics->camera()
-                                     ->view_matrix());
-    glm::mat4 model = glm::mat4(1.0f);
+    shader->set_mat4("view", graphics->camera()->view_matrix());
 
-    // Pomeramo ranac na -5.0f na Z osi da bude „dalje od kamere“
-    model = glm::translate(model, glm::vec3(0.0f, 0.0f, -7.0f));
-    // Zatim ga skaliramo
+    // Kreiraj model matricu za ranac – ovde pomeraš ranac na Z osi da bude dalje od kamere
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(0.0f, 0.0f, -7.0f));// Pomeranje na -7.0 po Z osi
     model = glm::scale(model, glm::vec3(m_backpack_scale));
-    // Prosledimo konačnu matricu šejderu
-    shader->use();
     shader->set_mat4("model", model);
 
+    // Postavi uniform varijable za point light
+    // Postavi poziciju kamere
+    auto camera = graphics->camera();
+    shader->set_vec3("viewPos", camera->Position);
+
+    // Postavi parametre point light-a (primer vrednosti, prilagodi po potrebi)
+    shader->set_vec3("pointLight.position", glm::vec3(1.2f, 1.0f, 2.0f));
+    shader->set_float("pointLight.constant", 1.0f);
+    shader->set_float("pointLight.linear", 0.09f);
+    shader->set_float("pointLight.quadratic", 0.032f);
+    shader->set_vec3("pointLight.ambient", glm::vec3(0.05f, 0.05f, 0.05f));
+    shader->set_vec3("pointLight.diffuse", glm::vec3(0.8f, 0.8f, 0.8f));
+    shader->set_vec3("pointLight.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+
+    // Postavi materijal (shininess)
+    shader->set_float("material_shininess", 32.0f);
+
+    // Crtaj ranac
     backpack->draw(shader);
 }
 
