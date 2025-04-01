@@ -31,7 +31,11 @@ namespace engine::test::app {
 
         void end_draw() override;
 
-        void draw_backpack();
+        void draw_light_source_cube(const glm::vec3 &lightPos, float scale);
+
+        void set_point_lights(auto shader);
+
+        void draw_backpack(const glm::vec3 &modelPos);
 
         void draw_skybox();
 
