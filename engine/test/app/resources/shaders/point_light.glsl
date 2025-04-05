@@ -32,7 +32,6 @@ void main()
 //#shader fragment
 #version 330 core
 
-// Definišemo broj point lightova koje shader podržava
 #define NR_POINT_LIGHTS 2
 
 struct PointLight {
@@ -55,7 +54,11 @@ in vec2 TexCoords;
 
 out vec4 FragColor;
 
+// Diffuse mapa
 uniform sampler2D texture_diffuse1;
+// Specular mapa
+uniform sampler2D texture_specular1;
+
 uniform vec3 viewPos;
 uniform float material_shininess;
 
@@ -67,9 +70,13 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir) {
     float distance = length(light.position - fragPos);
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
 
+    // Diffuse komponenta iz diffuse mape
     vec3 ambient = light.ambient * texture(texture_diffuse1, TexCoords).rgb;
     vec3 diffuse = light.diffuse * diff * texture(texture_diffuse1, TexCoords).rgb;
-    vec3 specular = light.specular * spec;
+
+    // Uzmi vrednost specular mape
+    float specMapValue = texture(texture_specular1, TexCoords).r;
+    vec3 specular = light.specular * spec * specMapValue;
 
     ambient *= attenuation;
     diffuse *= attenuation;
