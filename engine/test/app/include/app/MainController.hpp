@@ -31,11 +31,13 @@ namespace engine::test::app {
 
         void end_draw() override;
 
+        void draw_mesh(auto model, auto shader, const glm::vec3 &position,
+                       const glm::vec3 &rotation,
+                       const glm::vec3 &scale);
+
         void draw_light_source_mesh(const glm::vec3 &lightPos, float scale);
 
         void set_point_lights(auto shader);
-
-        void draw_backpack(const glm::vec3 &modelPos);
 
         void draw_skybox();
 
