@@ -66,10 +66,8 @@ void PlatformController::initialize() {
     m_window = Window(handle, window_width, window_height, window_title);
     // Kraj Fullscreen opcije
 
-    RG_GUARANTEE(handle, "GLFW3 platform failed to create a Window.");
-    m_window = Window(handle, window_width, window_height, window_title);
-
     glfwMakeContextCurrent(m_window.handle_());
+
     glfwSetCursorPosCallback(m_window.handle_(), glfw_mouse_callback);
     glfwSetScrollCallback(m_window.handle_(), glfw_scroll_callback);
     glfwSetKeyCallback(m_window.handle_(), glfw_key_callback);
