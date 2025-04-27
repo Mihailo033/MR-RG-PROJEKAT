@@ -1,4 +1,3 @@
-
 #ifndef MAINCONTROLLER_HPP
 #define MAINCONTROLLER_HPP
 
@@ -37,7 +36,7 @@ namespace engine::test::app {
 
         void draw_light_source_mesh(const glm::vec3 &lightPos, float scale);
 
-        void set_point_lights(auto shader);
+        void set_lights(auto shader);
 
         void draw_skybox();
 
