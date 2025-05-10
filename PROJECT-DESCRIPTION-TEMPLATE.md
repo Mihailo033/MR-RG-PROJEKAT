@@ -22,13 +22,14 @@
 
 [ ] Frame-buffers with post-processing   
 [ ] Instancing  
-[ ] Off-screen Anti-Aliasing  
+[check] Off-screen Anti-Aliasing  
 [ ] Parallax Mapping
 
 ### Group B:
+
 [ ] Bloom with the use of HDR  
 [ ] Deferred Shading  
-[ ] Point Shadows  
+[check] Point Shadows  
 [ ] SSAO
 
 ### Engine improvement:
