@@ -40,6 +40,21 @@ void MainController::initialize() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     // ──────────────────────────────────────────────────────────────
 
+    // ------------- Compute shadow matrices -------------
+    glm::mat4 shadowProj = glm::perspective(
+            glm::radians(90.0f),
+            float(SHADOW_WIDTH) / float(SHADOW_HEIGHT),
+            near_plane,
+            far_plane
+            );
+
+    shadowMatrices[0] = shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(1, 0, 0), glm::vec3(0, -1, 0));
+    shadowMatrices[1] = shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(-1, 0, 0), glm::vec3(0, -1, 0));
+    shadowMatrices[2] = shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0, 1, 0), glm::vec3(0, 0, 1));
+    shadowMatrices[3] = shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0, -1, 0), glm::vec3(0, 0, -1));
+    shadowMatrices[4] = shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0, 0, 1), glm::vec3(0, -1, 0));
+    shadowMatrices[5] = shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0, 0, -1), glm::vec3(0, -1, 0));
+
     // ─── MSAA off-screen FBO setup ───────────────────────────────
     // Омогући MSAA
     glEnable(GL_MULTISAMPLE);
