@@ -17,6 +17,8 @@ namespace engine::test::app {
         }
 
     private:
+        int width, height; // prozor
+
         // MSAA off-screen anti-aliasing
         static constexpr unsigned int MSAA_SAMPLES = 4; // број узорака
         unsigned int msFBO                         = 0; // MSAA FBO
@@ -31,6 +33,11 @@ namespace engine::test::app {
         float near_plane                        = 1.0f, far_plane = 25.0f;
         glm::vec3 lightPos{0.0f, 10.0f, 0.0f};
         glm::mat4 shadowMatrices[6];
+
+        // Point shadows funckije
+        void renderSceneDepth(const resources::Shader *depthShader);
+
+        void renderSceneLit(const resources::Shader *litShader);
 
         void initialize() override;
 

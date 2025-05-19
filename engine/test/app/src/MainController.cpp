@@ -62,8 +62,8 @@ void MainController::initialize() {
     // Прочитај тренутни viewport (width, height)
     GLint vp[4];
     glGetIntegerv(GL_VIEWPORT, vp);
-    int width = vp[2];
-    int height = vp[3];
+    width = vp[2];
+    height = vp[3];
 
     // 1) Генериши и bind-уј MSAA FBO
     glGenFramebuffers(1, &msFBO);
@@ -138,41 +138,57 @@ void MainController::begin_draw() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 }
 
-// Scena
 void MainController::draw() {
     auto graphics = engine::core::Controller::get<engine::graphics::GraphicsController>();
+    auto resources = engine::core::Controller::get<engine::resources::ResourcesController>();
 
-    auto Unlit = engine::core::Controller::get<engine::resources::ResourcesController>()->shader("basic");
-    Unlit->use();
-    Unlit->set_mat4("projection", graphics->projection_matrix());
-    Unlit->set_mat4("view", graphics->camera()->view_matrix());
-    Unlit->set_vec3("viewPos", graphics->camera()->Position);
+    // ----- DEPTH PASS -----
+    glDisable(GL_MULTISAMPLE);
+    auto depthShader = resources->shader("point_shadows_depth");
+    depthShader->use();
+    for (int i = 0; i < 6; ++i)
+        depthShader->set_mat4("shadowMatrices[" + std::to_string(i) + "]",
+                              shadowMatrices[i]);
+    depthShader->set_vec3("lightPos", lightPos);
+    depthShader->set_float("far_plane", far_plane);
 
-    auto Lit = engine::core::Controller::get<engine::resources::ResourcesController>()->shader("lighting");
+    glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    glCullFace(GL_FRONT);
+    renderSceneDepth(depthShader);
+    glCullFace(GL_BACK);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, msFBO);
+    glEnable(GL_MULTISAMPLE);
+
+    // reset viewport
+    glViewport(0, 0, width, height);
+    // -------------------------------------------------
+
+    // ----- MAIN PASS -----------------------------------
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    auto Lit = resources->shader("lighting");
     Lit->use();
     Lit->set_mat4("projection", graphics->projection_matrix());
     Lit->set_mat4("view", graphics->camera()->view_matrix());
-    Lit->set_vec3("viewPos", graphics->camera()->Position);
 
-    // Crtaj point light-ove
     set_lights(Lit);
 
-    // Crtaj modele
-    auto backpack = engine::core::Controller::get<engine::resources::ResourcesController>()->model("backpack");
-    draw_mesh(backpack, Lit, glm::vec3(-5.0f, 0.0f, -7.0f), glm::vec3(0.0f), glm::vec3(0.5f));
-    draw_mesh(backpack, Lit, glm::vec3(5.0f, 0.0f, -7.0f), glm::vec3(0.0f), glm::vec3(0.5f));
+    // binduj sampler i šalji uniform-e (za sada shadows=false)
+    Lit->set_int("shadowMap", 1);
+    Lit->set_vec3("lightPos", lightPos);
+    Lit->set_float("far_plane", far_plane);
+    Lit->set_bool("shadows", false);
 
-    auto terrain = engine::core::Controller::get<engine::resources::ResourcesController>()->model("terrain");
-    draw_mesh(terrain, Lit, glm::vec3(0.0f, -10.0f, 0.0f), glm::vec3(0.0f), glm::vec3(3.0f));
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
 
-    auto tree = engine::core::Controller::get<engine::resources::ResourcesController>()->model("tree");
-    draw_mesh(tree, Lit, glm::vec3(26.0f, 3.0f, 0.0f), glm::vec3(0.0f, 0.0f, -80.0f), glm::vec3(10.0f));
-    draw_mesh(tree, Lit, glm::vec3(-15.0f, 3.0f, 20.0f), glm::vec3(0.0f, 0.0f, -80.0f), glm::vec3(10.0f));
-    draw_mesh(tree, Lit, glm::vec3(30.0f, 3.0f, -10.0f), glm::vec3(0.0f, 0.0f, -80.0f), glm::vec3(10.0f));
-    draw_mesh(tree, Lit, glm::vec3(-20.0f, 3.0f, 10.0f), glm::vec3(0.0f, 0.0f, -80.0f), glm::vec3(10.0f));
-    draw_mesh(tree, Lit, glm::vec3(26.0f, 3.0f, 10.0f), glm::vec3(0.0f, 0.0f, -80.0f), glm::vec3(10.0f));
+    renderSceneLit(Lit);
 
-    // Crtaj skybox
     draw_skybox();
 }
 
@@ -197,6 +213,85 @@ void MainController::end_draw() {
 
 // USER DEFINED
 // ---------------------------------------------------------------------------------------------------------------------------
+
+void MainController::renderSceneDepth(const resources::Shader *depthShader) {
+    auto resources = engine::core::Controller::get<engine::resources::ResourcesController>();
+
+    // 1) Backpack 1
+    {
+        glm::mat4 model = glm::translate(glm::mat4(1.0f),
+                                         glm::vec3(-5.0f, 0.0f, -7.0f));
+        model = glm::scale(model, glm::vec3(0.5f));
+        depthShader->set_mat4("model", model);
+        resources->model("backpack")->draw(depthShader);
+    }
+
+    // 2) Backpack 2
+    {
+        glm::mat4 model = glm::translate(glm::mat4(1.0f),
+                                         glm::vec3(5.0f, 0.0f, -7.0f));
+        model = glm::scale(model, glm::vec3(0.5f));
+        depthShader->set_mat4("model", model);
+        resources->model("backpack")->draw(depthShader);
+    }
+
+    // 3) Terrain
+    {
+        glm::mat4 model = glm::translate(glm::mat4(1.0f),
+                                         glm::vec3(0.0f, -10.0f, 0.0f));
+        model = glm::scale(model, glm::vec3(3.0f));
+        depthShader->set_mat4("model", model);
+        resources->model("terrain")->draw(depthShader);
+    }
+
+    // 4) Trees (u petlji)
+    std::vector<glm::vec3> treePositions = {
+            {26.0f, 3.0f, 0.0f},
+            {-15.0f, 3.0f, 20.0f},
+            {30.0f, 3.0f, -10.0f},
+            {-20.0f, 3.0f, 10.0f},
+            {26.0f, 3.0f, 10.0f}
+    };
+    for (auto &pos: treePositions) {
+        glm::mat4 model = glm::translate(glm::mat4(1.0f), pos);
+        model = glm::scale(model, glm::vec3(10.0f));
+        depthShader->set_mat4("model", model);
+        resources->model("tree")->draw(depthShader);
+    }
+}
+
+void MainController::renderSceneLit(const resources::Shader *shader) {
+    auto resources = engine::core::Controller::get<engine::resources::ResourcesController>();
+
+    // 1) Backpack 1
+    draw_mesh(resources->model("backpack"), shader,
+              glm::vec3(-5.0f, 0.0f, -7.0f),
+              glm::vec3(0.0f), glm::vec3(0.5f));
+
+    // 2) Backpack 2
+    draw_mesh(resources->model("backpack"), shader,
+              glm::vec3(5.0f, 0.0f, -7.0f),
+              glm::vec3(0.0f), glm::vec3(0.5f));
+
+    // 3) Terrain
+    draw_mesh(resources->model("terrain"), shader,
+              glm::vec3(0.0f, -10.0f, 0.0f),
+              glm::vec3(0.0f), glm::vec3(3.0f));
+
+    // 4) Trees
+    std::vector<glm::vec3> treePositions = {
+            {26.0f, 3.0f, 0.0f},
+            {-15.0f, 3.0f, 20.0f},
+            {30.0f, 3.0f, -10.0f},
+            {-20.0f, 3.0f, 10.0f},
+            {26.0f, 3.0f, 10.0f}
+    };
+
+    for (auto &pos: treePositions) {
+        draw_mesh(resources->model("tree"), shader,
+                  pos, glm::vec3(0.0f, 0.0f, -80.0f), glm::vec3(10.0f));
+    }
+}
 
 void MainController::draw_mesh(auto model, auto shader,
                                const glm::vec3 &position,
