@@ -179,12 +179,13 @@ void MainController::draw() {
     set_lights(Lit);
 
     // binduj sampler i šalji uniform-e (za sada shadows=false)
-    Lit->set_int("shadowMap", 1);
+    Lit->use();
+    Lit->set_int("shadowMap", 2);
     Lit->set_vec3("lightPos", lightPos);
     Lit->set_float("far_plane", far_plane);
-    Lit->set_bool("shadows", false);
+    Lit->set_bool("shadows", true);
 
-    glActiveTexture(GL_TEXTURE1);
+    glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
 
     renderSceneLit(Lit);
@@ -363,7 +364,7 @@ void MainController::set_lights(auto shader) {
         shader->set_float(base + ".Atten.Exp", 0.032f);
     }
 
-    // 4) Materijal (ovo možeš posebno per-mesh)
+    // 4) Materijal
     shader->set_vec3("gMaterial.AmbientColor", glm::vec3(1.0f));
     shader->set_vec3("gMaterial.DiffuseColor", glm::vec3(1.0f));
     shader->set_vec3("gMaterial.SpecularColor", glm::vec3(1.0f));
