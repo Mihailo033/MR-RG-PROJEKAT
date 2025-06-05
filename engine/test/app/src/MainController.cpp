@@ -249,22 +249,19 @@ void MainController::renderSceneDepth(const resources::Shader *depthShader) {
     auto resources = engine::core::Controller::get<engine::resources::ResourcesController>();
 
     // 1) Backpack 1
-    {
-        glm::mat4 model = glm::translate(glm::mat4(1.0f),
-                                         glm::vec3(-5.0f, 0.0f, -5.0f));
-        model = glm::scale(model, glm::vec3(0.5f));
-        depthShader->set_mat4("model", model);
-        resources->model("backpack")->draw(depthShader);
-    }
+    glm::vec3 backpackPos = glm::vec3(-10.0f, 0.0f, 3.0f);
+    glm::mat4 model = glm::translate(glm::mat4(1.0f), backpackPos);
+    model = glm::scale(model, glm::vec3(0.5f));
+    depthShader->set_mat4("model", model);
+    resources->model("backpack")->draw(depthShader);
 
-    // 2) Backpack 2
-    {
-        glm::mat4 model = glm::translate(glm::mat4(1.0f),
-                                         glm::vec3(-10.0f, 0.0f, 3.0f));
-        model = glm::scale(model, glm::vec3(0.5f));
-        depthShader->set_mat4("model", model);
-        resources->model("backpack")->draw(depthShader);
-    }
+    // 2) Pole
+    glm::mat4 poleModel = glm::translate(glm::mat4(1.0f), glm::vec3(-8.0f, -7.0f, -5.0f));
+    // Po potrebi skaliraj/rotiraj poleModel da bude odgovarajuće visine/orijentacije.
+    // Ovde ćemo pretpostaviti uniformnu skalu 1.0 (bez rotacije):
+    poleModel = glm::scale(poleModel, glm::vec3(2.0f));
+    depthShader->set_mat4("model", poleModel);
+    resources->model("pole")->draw(depthShader);
 
     // 3) Terrain
     {
@@ -297,14 +294,17 @@ void MainController::renderSceneLit(const resources::Shader *shader) {
     auto resources = engine::core::Controller::get<engine::resources::ResourcesController>();
 
     // 1) Backpack 1
+    glm::vec3 backpackPos = glm::vec3(-10.0f, 0.0f, 3.0f);
     draw_mesh(resources->model("backpack"), shader,
-              glm::vec3(-5.0f, 0.0f, -5.0f),
-              glm::vec3(0.0f), glm::vec3(0.5f));
+              backpackPos,     // pozicija
+              glm::vec3(0.0f), // nema rotacije
+              glm::vec3(0.5f));// skala 0.5
 
-    // 2) Backpack 2
-    draw_mesh(resources->model("backpack"), shader,
-              glm::vec3(-10.0f, 0.0f, 3.0f),
-              glm::vec3(0.0f), glm::vec3(0.5f));
+    // 2) Pole
+    draw_mesh(resources->model("pole"), shader,
+              glm::vec3(-8.0f, -7.0f, -5.0f),
+              glm::vec3(0.0f), // bez rotacije
+              glm::vec3(2.0f));// skala 1
 
     // 3) Terrain
     draw_mesh(resources->model("terrain"), shader,
@@ -323,7 +323,9 @@ void MainController::renderSceneLit(const resources::Shader *shader) {
 
     for (auto &pos: treePositions) {
         draw_mesh(resources->model("tree"), shader,
-                  pos, glm::vec3(0.0f, 0.0f, -80.0f), glm::vec3(10.0f));
+                  pos,
+                  glm::vec3(0.0f, 0.0f, -80.0f),
+                  glm::vec3(10.0f));
     }
 }
 
@@ -382,7 +384,7 @@ void MainController::set_lights(auto shader) {
     shader->set_int("gNumPointLights", 1);
 
     // 3) Параметри једног point light-а
-    glm::vec3 lp = glm::vec3(-10.0f, 1.0f, 2.0f);
+    glm::vec3 lp = lightPos;
     shader->set_vec3("gPointLights[0].Base.Color", glm::vec3(1.0f, 0.8f, 0.6f));
     shader->set_float("gPointLights[0].Base.AmbientIntensity", 0.1f);
     shader->set_float("gPointLights[0].Base.DiffuseIntensity", 1.0f);
