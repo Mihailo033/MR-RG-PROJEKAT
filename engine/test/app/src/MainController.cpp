@@ -1,3 +1,4 @@
+#include <imgui.h>
 #include <glad/glad.h>
 #include <memory>
 #include <spdlog/spdlog.h>
@@ -193,12 +194,12 @@ void MainController::draw() {
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // ... претходни код ...
-
     auto Lit = resources->shader("lighting");
     Lit->use();
     Lit->set_mat4("projection", graphics->projection_matrix());
     Lit->set_mat4("view", graphics->camera()->view_matrix());
+
+    Lit->set_float("uLightIntensity", pointLightIntensity);
 
     set_lights(Lit);
 
@@ -220,6 +221,7 @@ void MainController::draw() {
     renderSceneLit(Lit);
 
     draw_skybox();
+
     // =================================================
 }
 
@@ -274,11 +276,14 @@ void MainController::renderSceneDepth(const resources::Shader *depthShader) {
 
     // 4) Trees (u petlji)
     std::vector<glm::vec3> treePositions = {
+            // Prvi set
             {26.0f, 3.0f, 0.0f},
             {-15.0f, 3.0f, 20.0f},
             {30.0f, 3.0f, -10.0f},
             {-20.0f, 3.0f, 10.0f},
             {26.0f, 3.0f, 10.0f},
+
+            // Drugi set
             {-15.0f, 3.0f, -30.0f}
     };
 
@@ -313,11 +318,14 @@ void MainController::renderSceneLit(const resources::Shader *shader) {
 
     // 4) Trees
     std::vector<glm::vec3> treePositions = {
+            // Prvi set
             {26.0f, 3.0f, 0.0f},
             {-15.0f, 3.0f, 20.0f},
             {30.0f, 3.0f, -10.0f},
             {-20.0f, 3.0f, 10.0f},
             {26.0f, 3.0f, 10.0f},
+
+            // Drugi set
             {-15.0f, 3.0f, -30.0f}
     };
 

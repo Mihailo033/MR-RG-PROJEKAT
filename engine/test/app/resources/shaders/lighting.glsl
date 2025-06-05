@@ -82,6 +82,8 @@ uniform vec3 lightPos;         // pozicija point svetla
 uniform float far_plane;       // far plane za depth pass
 uniform bool shadows;          // da li računamo senke (true/false)
 
+uniform float uLightIntensity;
+
 // Predefinisane offset smernice za PCF (20 uzoraka)
 // Uzete s primerka sa LearnOpenGL, mogu se smanjiti ili povećati broj uzoraka po potrebi
 vec3 sampleOffsetDirections[20] = vec3[](
@@ -168,6 +170,9 @@ vec3 CalcPointLightSmooth(int i, vec3 normal)
     // 1) Phong (ambient+diffuse+specular)
     vec3 lightDir = normalize(vLocalPos - pos);
     vec4 phongCol = CalcLightInternal(b, lightDir, normal);
+
+    // Intenzitet svetla
+    phongCol.rgb *= uLightIntensity;
 
     // 2) Атенација по даљини
     float d = length(vLocalPos - pos);
