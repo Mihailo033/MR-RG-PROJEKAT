@@ -3,6 +3,11 @@
 #include <GL/gl.h>
 
 namespace engine::test::app {
+    struct ScheduledEvent {
+        float triggerTime;     // vreme kada se event aktivira (u sekundama)
+        std::string eventName; // npr. "START_FLICKER" ili "SPAWN_MODEL"
+    };
+
     class MainPlatformEventObserver final : public engine::platform::PlatformEventObserver {
     public:
         void on_key(engine::platform::Key key) override;
@@ -14,6 +19,26 @@ namespace engine::test::app {
     public:
         float pointLightIntensity = 5.0f;       // Intenzitet point light svetla
         glm::vec3 lightPos{-10.0f, 8.0f, 2.0f}; // Pozicija point light svetla
+
+        // -------Scheduled event--------------------------------------------------------
+        // Queue svih zakazanih događaja
+        std::vector<ScheduledEvent> eventQueue;
+
+        // Flag i vreme za početnu akciju
+        float currentTime       = 0.0f; // u sekundama, broji vreme od starta
+        bool actionTriggered    = false;
+        float actionTriggerTime = 0.0f;
+
+        // Za treptanje svetla
+        bool flickerActive     = false;
+        float flickerStartTime = 0.0f;
+
+        // Spawn-ovani objekti: ime modela + pozicija, rotacija, skala
+        std::vector<std::tuple<std::string, glm::vec3, glm::vec3, glm::vec3> > spawnedObjects;
+
+        void executeEvent(const std::string &eventName);
+
+        // ---------------------------------------------------------------------------------------
 
         std::string_view name() const override {
             return "test::app::MainController";

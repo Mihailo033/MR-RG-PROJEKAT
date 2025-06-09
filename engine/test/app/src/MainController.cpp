@@ -124,15 +124,71 @@ bool MainController::loop() {
 }
 
 void MainController::poll_events() {
-    const auto platform = engine::core::Controller::get<engine::platform::PlatformController>();
-    if (platform->key(engine::platform::KEY_F1)
+    auto platform = engine::core::Controller::get<engine::platform::PlatformController>();
+
+    // 0) Akumuliraj proteklo vreme
+    currentTime += platform->dt();
+
+    // 1) Postojeći kod za F1
+    if (platform->key(engine::platform::KeyId::KEY_F1)
                 .state() == engine::platform::Key::State::JustPressed) {
         m_cursor_enabled = !m_cursor_enabled;
         platform->set_enable_cursor(m_cursor_enabled);
     }
+
+    // 2) ACTION_X = pritisak L
+    if (!actionTriggered &&
+        platform->key(engine::platform::KeyId::KEY_L).state() == engine::platform::Key::State::JustPressed) {
+        actionTriggered = true;
+        actionTriggerTime = currentTime;// beležimo vreme pritiska
+        constexpr float M = 2.0f;       // nakon 2 sekunde startujemo flicker
+        eventQueue.push_back({currentTime + M, "START_FLICKER"});
+        spdlog::info("L pritisnut → zakazujem START_FLICKER za +{:.2f}s", M);
+    }
 }
 
-void MainController::update() { update_camera(); }
+void MainController::update() {
+    // 1) update kamere
+    update_camera();
+
+    // 2) privremeni kontejner
+    std::vector<ScheduledEvent> newEvents;
+
+    // 3) iteriramo kroz eventQueue
+    for (auto it = eventQueue.begin(); it != eventQueue.end(); /* nista */) {
+        // DEBUG
+        spdlog::info("  [debug] eventQueue[{}] = '{}' @ triggerTime={:.2f}, currentTime={:.2f}",
+                     std::distance(eventQueue.begin(), it),
+                     it->eventName,
+                     it->triggerTime,
+                     currentTime);
+
+        if (currentTime >= it->triggerTime) {
+            // izvrši event
+            executeEvent(it->eventName);
+
+            // umesto push_back u eventQueue, u newEvents
+            if (it->eventName == "START_FLICKER") {
+                constexpr float N = 3.0f;
+                newEvents.push_back({currentTime + N, "SPAWN_MODEL"});
+                spdlog::info("  zakazujem SPAWN_MODEL za +{:.2f}s", N);
+            }
+
+            // briši stari event
+            it = eventQueue.erase(it);
+        } else { ++it; }
+    }
+
+    // 4) spojimo privremeni spisak sa glavnim
+    if (!newEvents.empty()) { eventQueue.insert(eventQueue.end(), newEvents.begin(), newEvents.end()); }
+
+    // 5) animacija treptanja svetla
+    if (flickerActive) {
+        float elapsed = currentTime - flickerStartTime;
+        constexpr float freq = 5.0f;
+        pointLightIntensity = (sinf(2.0f * 3.14159265f * freq * elapsed) + 1.0f) * 0.5f;
+    }
+}
 
 void MainController::begin_draw() {
     glBindFramebuffer(GL_FRAMEBUFFER, msFBO);
@@ -446,6 +502,32 @@ void MainController::update_camera() {
     auto mouse = platform->mouse();
     camera->rotate_camera(mouse.dx, mouse.dy);
     camera->zoom(mouse.scroll);
+}
+
+void MainController::executeEvent(const std::string &eventName) {
+    // Koristimo currentTime koji već akumuliramo u poll_events()
+    float now = currentTime;
+
+    if (eventName == "START_FLICKER") {
+        // 1) Aktiviramo treptanje
+        flickerActive = true;
+        flickerStartTime = now;
+        spdlog::info("EVENT START_FLICKER: flickerActive = true");
+    } else if (eventName == "SPAWN_MODEL") {
+        // 2) Gasimo treptanje i vraćamo intenzitet na 5.0
+        flickerActive = false;
+        pointLightIntensity = 5.0f;
+        spdlog::info("EVENT SPAWN_MODEL: flickerActive = false, intensity reset");
+
+        // 3) Dodajemo novi model u spawnedObjects
+        spawnedObjects.emplace_back(
+                "tree",
+                glm::vec3(0.0f, 0.0f, 0.0f),
+                glm::vec3(0.0f),
+                glm::vec3(1.0f)
+                );
+        spdlog::info("Spawnovan novi model: tree");
+    } else { spdlog::warn("executeEvent: nepoznat event '{}'", eventName); }
 }
 
 }
