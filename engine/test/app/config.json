@@ -24,9 +24,9 @@
     }
   },
   "window": {
+    "width": 1600,
     "height": 900,
     "title": "RG Projekat - mi22105",
-    "width": 1600,
     "fullscreen": false
   }
 }

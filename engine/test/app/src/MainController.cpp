@@ -148,45 +148,33 @@ void MainController::poll_events() {
 }
 
 void MainController::update() {
-    // 1) update kamere
     update_camera();
 
-    // 2) privremeni kontejner
     std::vector<ScheduledEvent> newEvents;
-
-    // 3) iteriramo kroz eventQueue
-    for (auto it = eventQueue.begin(); it != eventQueue.end(); /* nista */) {
-        // DEBUG
-        spdlog::info("  [debug] eventQueue[{}] = '{}' @ triggerTime={:.2f}, currentTime={:.2f}",
-                     std::distance(eventQueue.begin(), it),
-                     it->eventName,
-                     it->triggerTime,
-                     currentTime);
-
+    for (auto it = eventQueue.begin(); it != eventQueue.end();) {
         if (currentTime >= it->triggerTime) {
-            // izvrši event
-            executeEvent(it->eventName);
+            const auto name = it->eventName;
+            executeEvent(name);
 
-            // umesto push_back u eventQueue, u newEvents
-            if (it->eventName == "START_FLICKER") {
-                constexpr float N = 3.0f;
-                newEvents.push_back({currentTime + N, "SPAWN_MODEL"});
-                spdlog::info("  zakazujem SPAWN_MODEL za +{:.2f}s", N);
+            if (name == "START_FLICKER") {
+                // 1) прво заврши flicker
+                newEvents.push_back({currentTime + flickerDuration, "STOP_FLICKER"});
+                spdlog::info("  zakazujem STOP_FLICKER za +{:.2f}s", flickerDuration);
+            } else if (name == "STOP_FLICKER") {
+                // 2) тек после spawnuj
+                newEvents.push_back({currentTime + spawnDelay, "SPAWN_MODEL"});
+                spdlog::info("  zakazujem SPAWN_MODEL za +{:.2f}s", spawnDelay);
             }
 
-            // briši stari event
             it = eventQueue.erase(it);
         } else { ++it; }
     }
-
-    // 4) spojimo privremeni spisak sa glavnim
     if (!newEvents.empty()) { eventQueue.insert(eventQueue.end(), newEvents.begin(), newEvents.end()); }
 
-    // 5) animacija treptanja svetla
     if (flickerActive) {
         float elapsed = currentTime - flickerStartTime;
         constexpr float freq = 5.0f;
-        pointLightIntensity = (sinf(2.0f * 3.14159265f * freq * elapsed) + 1.0f) * 0.5f;
+        pointLightIntensity = (sinf(2.0f * 3.14159f * freq * elapsed) + 1.0f) * 0.5f;
     }
 }
 
@@ -391,6 +379,22 @@ void MainController::renderSceneLit(const resources::Shader *shader) {
                   glm::vec3(0.0f, 0.0f, -80.0f),
                   glm::vec3(10.0f));
     }
+
+    // Event spawner
+    for (auto &entry: spawnedObjects) {
+        const std::string &modelName = std::get<0>(entry);
+        const glm::vec3 &pos = std::get<1>(entry);
+        const glm::vec3 &rot = std::get<2>(entry);
+        const glm::vec3 &scale = std::get<3>(entry);
+
+        draw_mesh(
+                resources->model(modelName),
+                shader,
+                pos,
+                rot,
+                scale
+                );
+    }
 }
 
 void MainController::draw_mesh(auto model, auto shader,
@@ -505,28 +509,22 @@ void MainController::update_camera() {
 }
 
 void MainController::executeEvent(const std::string &eventName) {
-    // Koristimo currentTime koji već akumuliramo u poll_events()
-    float now = currentTime;
-
     if (eventName == "START_FLICKER") {
-        // 1) Aktiviramo treptanje
         flickerActive = true;
-        flickerStartTime = now;
-        spdlog::info("EVENT START_FLICKER: flickerActive = true");
-    } else if (eventName == "SPAWN_MODEL") {
-        // 2) Gasimo treptanje i vraćamo intenzitet na 5.0
+        flickerStartTime = currentTime;
+        spdlog::info("EVENT START_FLICKER");
+    } else if (eventName == "STOP_FLICKER") {
         flickerActive = false;
-        pointLightIntensity = 5.0f;
-        spdlog::info("EVENT SPAWN_MODEL: flickerActive = false, intensity reset");
-
-        // 3) Dodajemo novi model u spawnedObjects
+        pointLightIntensity = 5.0f;// resetujemo intenzitet
+        spdlog::info("EVENT STOP_FLICKER");
+    } else if (eventName == "SPAWN_MODEL") {
         spawnedObjects.emplace_back(
                 "tree",
-                glm::vec3(0.0f, 0.0f, 0.0f),
+                glm::vec3(15.0f, 3.0f, -30.0f),
                 glm::vec3(0.0f),
-                glm::vec3(1.0f)
+                glm::vec3(15.0f)
                 );
-        spdlog::info("Spawnovan novi model: tree");
+        spdlog::info("EVENT SPAWN_MODEL: spawnovan tree");
     } else { spdlog::warn("executeEvent: nepoznat event '{}'", eventName); }
 }
 
