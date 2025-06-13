@@ -36,9 +36,9 @@ void GUIController::draw() {
     ImGui::Begin("Postavke svetla");
     // Ubaci slider koji menja mainCtrl->m_pointLightIntensity
     // Tasteri: od 0.0 do 5.0 (možeš prilagoditi range)
-    ImGui::SliderFloat("Point Light Intensity", &mainCtrl->pointLightIntensity, 0.0f, 5.0f);
+    ImGui::SliderFloat("Point Light Intensity", &mainCtrl->pointLightIntensity, 0.0f, 7.0f);
     ImGui::SliderFloat3("Light Position", &mainCtrl->lightPos.x,
-                        -50.0f, 50.0f,
+                        -200.0f, 200.0f,
                         "%.1f");
     ImGui::End();
 
