@@ -40,6 +40,10 @@ void GUIController::draw() {
     ImGui::SliderFloat3("Light Position", &mainCtrl->lightPos.x,
                         -200.0f, 200.0f,
                         "%.1f");
+
+    // MSAA
+    ImGui::Checkbox("Enable MSAA", &mainCtrl->msaaEnabled);
+
     ImGui::End();
 
     // Zatvorimo ImGui pass

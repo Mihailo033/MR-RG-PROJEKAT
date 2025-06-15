@@ -57,58 +57,14 @@ void MainController::initialize() {
     shadowMatrices[5] = shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0, 0, -1), glm::vec3(0, -1, 0));
 
     // ─── MSAA off-screen FBO setup ───────────────────────────────
-    // Омогући MSAA
     glEnable(GL_MULTISAMPLE);
 
-    // Прочитај тренутни viewport (width, height)
     GLint vp[4];
     glGetIntegerv(GL_VIEWPORT, vp);
     width = vp[2];
     height = vp[3];
 
-    // 1) Генериши и bind-уј MSAA FBO
-    glGenFramebuffers(1, &msFBO);
-    glBindFramebuffer(GL_FRAMEBUFFER, msFBO);
-
-    // 2) Color renderbuffer multisample
-    glGenRenderbuffers(1, &msColorRBO);
-    glBindRenderbuffer(GL_RENDERBUFFER, msColorRBO);
-    glRenderbufferStorageMultisample(
-            GL_RENDERBUFFER,
-            MSAA_SAMPLES,
-            GL_RGBA8,
-            width,
-            height
-            );
-    glFramebufferRenderbuffer(
-            GL_FRAMEBUFFER,
-            GL_COLOR_ATTACHMENT0,
-            GL_RENDERBUFFER,
-            msColorRBO
-            );
-
-    // 3) Depth‐stencil renderbuffer multisample
-    glGenRenderbuffers(1, &msDepthRBO);
-    glBindRenderbuffer(GL_RENDERBUFFER, msDepthRBO);
-    glRenderbufferStorageMultisample(
-            GL_RENDERBUFFER,
-            MSAA_SAMPLES,
-            GL_DEPTH24_STENCIL8,
-            width,
-            height
-            );
-    glFramebufferRenderbuffer(
-            GL_FRAMEBUFFER,
-            GL_DEPTH_STENCIL_ATTACHMENT,
-            GL_RENDERBUFFER,
-            msDepthRBO
-            );
-
-    // 4) Проверa статусa
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) { spdlog::error("MSAA FBO is not complete!"); }
-
-    // 5) Unbind
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    _msaa = std::make_unique<engine::graphics::MSAA>(width, height, /*samples=*/4);
     // ───────────────────────────────────────────────────────────────
 
     auto observer = std::make_unique<MainPlatformEventObserver>();
@@ -179,7 +135,7 @@ void MainController::update() {
 }
 
 void MainController::begin_draw() {
-    glBindFramebuffer(GL_FRAMEBUFFER, msFBO);
+    if (msaaEnabled) { _msaa->bindForWriting(); } else { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 }
 
@@ -229,8 +185,14 @@ void MainController::draw() {
     glCullFace(GL_BACK);
 
     // Врати се на MSAA FBO и ресетуј viewport
-    glBindFramebuffer(GL_FRAMEBUFFER, msFBO);
-    glEnable(GL_MULTISAMPLE);
+    if (msaaEnabled) {
+        _msaa->bindForWriting();
+        // По потреби enable MSAA (али MSAA већ биндовано у bindForWriting)
+        glEnable(GL_MULTISAMPLE);
+    } else {
+        // Рендеруј директно у подразумевани фрејмбуфер
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
     glViewport(0, 0, width, height);
     // =================================================
 
@@ -271,18 +233,12 @@ void MainController::draw() {
 
 void MainController::end_draw() {
     // 1) Resolve MSAA FBO → default framebuffer
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, msFBO);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    if (msaaEnabled) {
+        // Resolve (blit) MSAA FBO у default framebufffer
+        _msaa->resolveToDefault();
+    }
+    // Ako ne, nista
 
-    // читај viewport димензије
-    GLint vp[4];
-    glGetIntegerv(GL_VIEWPORT, vp);
-    int w = vp[2], h = vp[3];
-
-    glBlitFramebuffer(
-            0, 0, w, h,
-            0, 0, w, h,
-            GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
     // 2) Swap
     engine::core::Controller::get<engine::platform::PlatformController>()->swap_buffers();

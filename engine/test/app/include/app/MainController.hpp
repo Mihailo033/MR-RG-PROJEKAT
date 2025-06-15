@@ -1,6 +1,11 @@
 #ifndef MAINCONTROLLER_HPP
 #define MAINCONTROLLER_HPP
 #include <GL/gl.h>
+#include <vector>
+#include <string>
+#include <tuple>
+#include <glm/glm.hpp>
+#include <engine/graphics/MSAA.hpp>
 
 namespace engine::test::app {
     struct ScheduledEvent {
@@ -17,8 +22,11 @@ namespace engine::test::app {
 
     class MainController final : public engine::core::Controller {
     public:
-        float pointLightIntensity = 7.0f;        // Intenzitet point light svetla
-        glm::vec3 lightPos{-10.0f, 10.0f, 2.0f}; // Pozicija point light svetla
+        // MSAA
+        bool msaaEnabled = true;
+
+        float pointLightIntensity = 7.0f;
+        glm::vec3 lightPos{-10.0f, 10.0f, 2.0f};
 
         // -------Scheduled event--------------------------------------------------------
         // Queue svih zakazanih događaja
@@ -49,13 +57,10 @@ namespace engine::test::app {
         }
 
     private:
-        int width, height; // prozor
+        int width, height;
 
-        // MSAA off-screen anti-aliasing
-        static constexpr unsigned int MSAA_SAMPLES = 4; // број узорака
-        unsigned int msFBO                         = 0; // MSAA FBO
-        unsigned int msColorRBO                    = 0; // MSAA color renderbuffer
-        unsigned int msDepthRBO                    = 0; // MSAA depth-stencil renderbuffer
+        // MSAA
+        std::unique_ptr<engine::graphics::MSAA> _msaa;
 
         // Point shadows
         static constexpr unsigned SHADOW_WIDTH  = 2048;
@@ -65,7 +70,6 @@ namespace engine::test::app {
         float near_plane                        = 1.0f, far_plane = 25.0f;
         glm::mat4 shadowMatrices[6];
 
-        // Point shadows funckije
         void renderSceneDepth(const resources::Shader *depthShader);
 
         void renderSceneLit(const resources::Shader *litShader);
@@ -84,7 +88,8 @@ namespace engine::test::app {
 
         void end_draw() override;
 
-        void draw_mesh(auto model, auto shader, const glm::vec3 &position,
+        void draw_mesh(auto model, auto shader,
+                       const glm::vec3 &position,
                        const glm::vec3 &rotation,
                        const glm::vec3 &scale);
 
@@ -96,9 +101,8 @@ namespace engine::test::app {
 
         void update_camera();
 
-        float m_backpack_scale{1.0f};
-        bool m_draw_gui{false};
         bool m_cursor_enabled{true};
     };
 }
-#endif //MAINCONTROLLER_HPP
+
+#endif // MAINCONTROLLER_HPP
