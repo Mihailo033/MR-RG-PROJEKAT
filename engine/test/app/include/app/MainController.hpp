@@ -6,11 +6,12 @@
 #include <tuple>
 #include <glm/glm.hpp>
 #include <engine/graphics/MSAA.hpp>
+#include <engine/graphics/Lighting.hpp>
 
 namespace engine::test::app {
     struct ScheduledEvent {
-        float triggerTime;     // vreme kada se event aktivira (u sekundama)
-        std::string eventName; // npr. "START_FLICKER" ili "SPAWN_MODEL"
+        float triggerTime; // vreme kada se event aktivira (u sekundama)
+        std::string eventName;
     };
 
     class MainPlatformEventObserver final : public engine::platform::PlatformEventObserver {
@@ -25,6 +26,7 @@ namespace engine::test::app {
         // MSAA
         bool msaaEnabled = true;
 
+        // Lighting
         float pointLightIntensity = 7.0f;
         glm::vec3 lightPos{-10.0f, 10.0f, 2.0f};
 
@@ -33,7 +35,7 @@ namespace engine::test::app {
         std::vector<ScheduledEvent> eventQueue;
 
         // Flag i vreme za početnu akciju
-        float currentTime       = 0.0f; // u sekundama, broji vreme od starta
+        float currentTime       = 0.0f;
         bool actionTriggered    = false;
         float actionTriggerTime = 0.0f;
 
@@ -62,17 +64,8 @@ namespace engine::test::app {
         // MSAA
         std::unique_ptr<engine::graphics::MSAA> _msaa;
 
-        // Point shadows
-        static constexpr unsigned SHADOW_WIDTH  = 2048;
-        static constexpr unsigned SHADOW_HEIGHT = 2048;
-        GLuint depthMapFBO                      = 0;
-        GLuint depthCubemap                     = 0;
-        float near_plane                        = 1.0f, far_plane = 25.0f;
-        glm::mat4 shadowMatrices[6];
-
-        void renderSceneDepth(const resources::Shader *depthShader);
-
-        void renderSceneLit(const resources::Shader *litShader);
+        // Lighting
+        engine::graphics::lighting::LightingSystem lighting{2048, 2048};
 
         void initialize() override;
 
@@ -94,8 +87,6 @@ namespace engine::test::app {
                        const glm::vec3 &scale);
 
         void draw_light_source_mesh(const glm::vec3 &lightPos, float scale);
-
-        void set_lights(auto shader);
 
         void draw_skybox();
 
