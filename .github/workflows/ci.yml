@@ -1,0 +1,89 @@
+name: CI with Fun Extras
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  # 1) Standard build & test
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install toolchain
+      run: sudo apt-get update && sudo apt-get install -y gcc g++ cmake valgrind codespell lizard
+    - name: Configure
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCOVERAGE=ON
+    - name: Build
+      run: cmake --build build -- -j$(nproc)
+    - name: Run unit tests
+      run: ctest --test-dir build --output-on-failure
+
+  # 2) Spell-check comments & docs
+  spellcheck:
+    runs-on: ubuntu-22.04
+    needs: build
+    steps:
+    - uses: actions/checkout@v3
+    - name: Run codespell
+      run: |
+        # Traži tipografske greške u .cpp, .h i .md fajlovima
+        codespell --ignore-words-list="teh" --max-errors=20 .
+
+  # 3) Cyclomatic complexity gate
+  complexity:
+    runs-on: ubuntu-22.04
+    needs: build
+    steps:
+    - uses: actions/checkout@v3
+    - name: Measure complexity with lizard
+      run: |
+        # Izdvoji fajlove iz svog koda i prikaži one čija je složenost > 10
+        lizard engine/src app/src --max-complexity=10
+
+  # 4) Binary-size regression
+  size-regression:
+    runs-on: ubuntu-22.04
+    needs: build
+    outputs:
+      curr_size: ${{ steps.size.outputs.curr }}
+      prev_size: ${{ steps.fetch_prev.outputs.prev }}
+    steps:
+    - uses: actions/checkout@v3
+    - name: Measure current binary size
+      id: size
+      run: |
+        curr=$(stat -c%s build/app/APP)
+        echo "::set-output name=curr::$curr"
+    - name: Fetch previous size from cache/artifact
+      id: fetch_prev
+      run: |
+        # (Pretpostavimo da čuvamo 'prev_size.txt' kao artifact)
+        prev=$(cat prev_size.txt || echo 0)
+        echo "::set-output name=prev::$prev"
+    - name: Compare sizes
+      run: |
+        echo "Previous: ${{ needs.size-regression.outputs.prev_size }} bytes"
+        echo "Current:  ${{ needs.size-regression.outputs.curr_size }} bytes"
+        if [ ${{ needs.size-regression.outputs.curr_size }} -gt $(( needs.size-regression.outputs.prev_size + 10000 )) ]; then
+          echo "🚨 Binary grew by more than 10 KB!"
+          exit 1
+        fi
+    - name: Upload current size
+      uses: actions/upload-artifact@v3
+      with:
+        name: prev_size
+        path: |
+          <(echo ${{ needs.size-regression.outputs.curr_size }}) # čuva za sledeći run
+
+  # 5) Memory-leak smoke test with Valgrind
+  valgrind:
+    runs-on: ubuntu-22.04
+    needs: build
+    steps:
+    - uses: actions/checkout@v3
+    - name: Run under Valgrind
+      run: |
+        valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all \
+          build/app/APP --run-headless
