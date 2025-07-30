@@ -36,18 +36,36 @@ void GUIController::draw() {
 
     ImGui::End();
 
-    // Draw camera info
-    ImGui::Begin("Camera info");
-    const auto &c = *camera;
-    ImGui::Text("Camera position: (%f, %f, %f)", c.Position
-                                                  .x, c.Position
-                                                       .y, c.Position
-                                                            .z);
-    ImGui::Text("(Yaw, Pitch): (%f, %f)", c.Yaw, c.Pitch);
-    ImGui::Text("Camera front: (%f, %f, %f)", c.Front
-                                               .x, c.Front
-                                                    .y, c.Front
-                                                         .z);
+    // Počni novi ImGui prozor
+    ImGui::Begin("Racer Simulation");
+
+    // ----- Simulation Parameters -----
+    ImGui::Text("Simulation Parameters");
+    ImGui::Separator();
+    ImGui::Text("Mass (m): %.2f kg", mainCtrl->m);
+    ImGui::Text("Drive Force (F): %.2f N", mainCtrl->F);
+    ImGui::Text("Air Density (rho): %.3f kg/m^3", mainCtrl->rho);
+    ImGui::Text("Area (A): %.2f m^2", mainCtrl->A);
+    ImGui::Text("Drag Coefficient (Cd): %.2f", mainCtrl->Cd);
+    ImGui::Text("Viscous Force (fv): %.2f N·s/m", mainCtrl->fv);
+    ImGui::Text("Crouch Force (fc): %.2f N", mainCtrl->fc);
+    ImGui::Text("Crouch Time (tc): %.2f s", mainCtrl->tc);
+
+    // ----- Race Settings -----
+    ImGui::Text("Race Settings");
+    ImGui::Separator();
+    ImGui::Text("Finish Line: %.2f m", mainCtrl->finishLine);
+    ImGui::Text("Max Time: %.2f s", mainCtrl->maxTime);
+    ImGui::Text("Wind Speed (w): %.2f m/s", mainCtrl->w);
+
+    // ----- Simulation State -----
+    ImGui::Text("Simulation State");
+    ImGui::Separator();
+    ImGui::Text("Time (t): %.2f s", mainCtrl->t);
+    ImGui::Text("Velocity (v): %.2f m/s", mainCtrl->v);
+    ImGui::Text("Acceleration (a): %.2f m/s^2", mainCtrl->a);
+    ImGui::Text("Distance (neg_z): %.2f m", mainCtrl->neg_z);
+
     ImGui::End();
 
     graphics->end_gui();

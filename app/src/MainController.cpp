@@ -1,3 +1,4 @@
+#include <imgui.h>
 #include <memory>
 #include <spdlog/spdlog.h>
 #include <engine/core/Engine.hpp>
@@ -170,11 +171,6 @@ void MainController::draw() {
                   glm::vec3(0.0f, glm::radians(180.0f), 0.0f), glm::vec3(0.5f));
     });
 
-    if (finishLine >= neg_z && t < maxTime) {
-        update_racer();
-        m_runnerPosition = glm::vec3(0.0f, -7.7f, 185.0f - neg_z);
-    }
-
     m_lighting.endDepthPass();
 
     // umesto glBindFramebuffer(...)
@@ -262,9 +258,15 @@ void MainController::draw() {
                   glm::vec3(0.5f));
     });
 
-    if (finishLine >= neg_z && t < maxTime) {
+    if (platform->key(platform::KeyId::KEY_ENTER)
+                .state() == platform::Key::State::JustPressed) { m_raceStarted = true; }
+
+    // samo kad je trka startovana i ako nisi prešao cilj ni istekao vreme
+    if (m_raceStarted && finishLine >= neg_z && t < maxTime) {
         update_racer();
-        m_runnerPosition = glm::vec3(0.0f, -7.7f, 185.0f - neg_z);
+
+        // pomeri model i svetlo
+        m_runnerPosition = glm::vec3(0.0f, -7.7f, 185.0f - static_cast<float>(neg_z));
         g_light_pos = m_runnerPosition + glm::vec3(0.0f, 15.0f, 0.0f);
     }
 
@@ -317,11 +319,23 @@ void MainController::draw_skybox() {
 
 void MainController::update_camera() {
     auto gui = core::Controller::get<GUIController>();
-    if (gui->is_enabled()) { return; }
+    // ask ImGui if it really wants your keystrokes
+    ImGuiIO &io = ImGui::GetIO();
+    // only block camera input if the GUI is open AND ImGui is actively capturing the keyboard
+    if (gui->is_enabled() && io.WantCaptureKeyboard) return;
 
     auto platform = core::Controller::get<platform::PlatformController>();
     auto camera = core::Controller::get<graphics::GraphicsController>()->camera();
     float dt = platform->dt();
+
+    if (platform->key(platform::KeyId::KEY_O).state() == platform::Key::State::Pressed) { camera->Position = m_runnerPosition + glm::vec3(-20.0f, 5.0f, 0.0f); }
+
+    if (platform->key(platform::KeyId::KEY_R).state() == platform::Key::State::JustPressed) {
+        neg_z = 0.0;
+        t = 0.0;
+        v = 0.0;
+        a = 0.0;
+    }
 
     // 1)
     if (platform->key(platform::KeyId::KEY_L)

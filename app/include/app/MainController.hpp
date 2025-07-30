@@ -15,24 +15,10 @@ public:
     bool g_msaa_enabled = true;
 
     // Lighting
-    float g_point_light_intensity = 20.0f;  // Intenzitet point light svetla
-    glm::vec3 g_light_pos{-5.0f, 7.0f, 182};// Pozicija point light svetla
+    float g_point_light_intensity = 20.0f;                                 // Intenzitet point light svetla
+    glm::vec3 g_light_pos{m_runnerPosition + glm::vec3(0.0f, 15.0f, 0.0f)};// Pozicija point light svetla
 
     std::string_view name() const override { return "test::app::MainController"; }
-
-private:
-    // MSAA
-    std::unique_ptr<engine::graphics::MSAA> m_msaa;
-
-    // Lighting
-    engine::graphics::lighting::LightingSystem m_lighting{2048, 2048};
-
-    // SprintSim
-    bool m_autoMoveLeft = false;
-    float m_leftTargetDistance = 160.0f;
-    float m_leftMovedDistance = 0.0f;
-
-    glm::vec3 m_runnerPosition = glm::vec3(0.0f, -7.7f, 185.0f);
 
     // --- fizički parametri i stanje trkača ---
     const double m = 80.0;   // kg (mass)
@@ -45,12 +31,28 @@ private:
     const double tc = 0.67;  // s (characteristic crouch time)
 
     double finishLine = 160.0f;
-    double maxTime = 60.0f;
+    double maxTime = 15.0f;
     double neg_z = 0.0;
-    double w = 0.0f;
+    double w = 10.0f;
     double t = 0.0;
     double v = 0.0;
     double a = 0.0;
+    // ----------------------------------------------------------
+
+private:
+    // MSAA
+    std::unique_ptr<engine::graphics::MSAA> m_msaa;
+
+    // Lighting
+    engine::graphics::lighting::LightingSystem m_lighting{2048, 2048};
+
+    // SprintSim
+    bool m_raceStarted = false;
+    bool m_autoMoveLeft = false;
+    float m_leftTargetDistance = 160.0f;
+    float m_leftMovedDistance = 0.0f;
+
+    glm::vec3 m_runnerPosition = glm::vec3(0.0f, -7.7f, 185.0f);
 
     double calculateAirResistance(double t, double v, double w);
 
