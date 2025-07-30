@@ -170,6 +170,11 @@ void MainController::draw() {
                   glm::vec3(0.0f, glm::radians(180.0f), 0.0f), glm::vec3(0.5f));
     });
 
+    if (finishLine >= neg_z && t < maxTime) {
+        update_racer();
+        m_runnerPosition = glm::vec3(0.0f, -7.5f, 185.0f - neg_z);
+    }
+
     m_lighting.endDepthPass();
 
     // umesto glBindFramebuffer(...)
@@ -257,12 +262,13 @@ void MainController::draw() {
                   glm::vec3(0.5f));
     });
 
-    m_lighting.renderLightBulb(g_light_pos, 3.0f);
-
     if (finishLine >= neg_z && t < maxTime) {
         update_racer();
         m_runnerPosition = glm::vec3(0.0f, -7.5f, 185.0f - neg_z);
+        g_light_pos = m_runnerPosition + glm::vec3(0.0f, 15.0f, 0.0f);
     }
+
+    m_lighting.renderLightBulb(g_light_pos, 3.0f);
 
     // ───── SKYBOX ────────────────────────────────────────────────────────────────────
     draw_skybox();

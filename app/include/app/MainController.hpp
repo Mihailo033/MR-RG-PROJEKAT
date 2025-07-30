@@ -6,7 +6,6 @@
 #include <glm/glm.hpp>
 #include <engine/graphics/MSAA.hpp>
 #include <engine/graphics/Lighting.hpp>
-#include <engine/core/EventQueue.hpp>
 
 namespace engine::myapp {
 
