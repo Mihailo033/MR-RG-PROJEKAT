@@ -15,6 +15,23 @@ void GraphicsController::initialize() {
     const int opengl_initialized = gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
     RG_GUARANTEE(opengl_initialized, "OpenGL failed to init!");
 
+    // —————————————————————————— ROTACIJA KAMERE ——————————————————————————
+    // želimo da yaw pomerimo +90°, pitch +15° (pogled gore)
+    float desiredYaw = 90.0f;
+    float desiredPitch = 8.0f;
+
+    // pošto rotate_camera množi offset sa MouseSensitivity, moramo
+    // offsete podeliti sa tim faktorom da bismo dobili tačne stepene
+    float xOffset = desiredYaw / m_camera.MouseSensitivity;
+    float yOffset = desiredPitch / m_camera.MouseSensitivity;
+
+    // sad u jednom pozivu pomeramo i yaw i pitch, i preskačemo clamp na pitch
+    m_camera.rotate_camera(xOffset,// +90° udesno
+                           yOffset,// +15° nagore
+                           false   // ne ograničavamo pitch na ±89°
+            );
+    // ————————————————————————————————————————————————————————————————
+
     auto platform = engine::core::Controller::get<platform::PlatformController>();
     auto handle = platform->window()
                           ->handle_();

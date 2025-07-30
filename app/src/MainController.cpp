@@ -60,63 +60,15 @@ bool MainController::loop() {
 void MainController::poll_events() {
     auto platform = engine::core::Controller::get<engine::platform::PlatformController>();
 
-    m_current_time += platform->dt();
-
     // 1)
     if (platform->key(engine::platform::KeyId::KEY_F1)
                 .state() == engine::platform::Key::State::JustPressed) {
         m_cursor_enabled = !m_cursor_enabled;
         platform->set_enable_cursor(m_cursor_enabled);
     }
-
-    // 2)
-    if (!m_action_triggered &&
-        platform->key(engine::platform::KeyId::KEY_L).state() == engine::platform::Key::State::JustPressed) {
-        m_action_triggered = true;
-        m_action_triggered = m_current_time;// beležimo vreme pritiska
-        constexpr float M = 2.0f;           // nakon 2 sekunde startujemo flicker
-        m_event_queue.schedule_after(m_current_time, M, "START_FLICKER");
-        spdlog::info("L pritisnut → zakazujem START_FLICKER za +{:.2f}s", M);
-    }
 }
 
-void MainController::update() {
-    update_camera();
-
-    // Позивамо EventQueue да изврши све догађаје чије је време стигло
-    m_event_queue.update(
-            m_current_time,
-            [&](const std::string &name) {
-                execute_event(name);
-
-                if (name == "START_FLICKER") {
-                    // након START_FLICKER заказујемо STOP_FLICKER
-                    m_event_queue.schedule_after(
-                            m_current_time,
-                            g_flicker_duration,
-                            "STOP_FLICKER"
-                            );
-                    spdlog::info("  zakazujem STOP_FLICKER za +{:.2f}s", g_flicker_duration);
-                } else if (name == "STOP_FLICKER") {
-                    // након STOP_FLICKER заказујемо SPAWN_MODEL
-                    m_event_queue.schedule_after(
-                            m_current_time,
-                            g_spawn_delay,
-                            "SPAWN_MODEL"
-                            );
-                    spdlog::info("  zakazujem SPAWN_MODEL za +{:.2f}s", g_spawn_delay);
-                }
-            }
-            );
-
-    // Ако је flicker активан, ажурирајмо интензитет светла
-    if (g_flicker_active) {
-        float elapsed = m_current_time - g_flicker_start_time;
-        constexpr float freq = 5.0f;
-        g_point_light_intensity =
-                (sinf(2.0f * 3.14159f * freq * elapsed) + 1.0f) * 0.5f;
-    }
-}
+void MainController::update() { update_camera(); }
 
 void MainController::begin_draw() {
     auto *graphics = core::Controller::get<engine::graphics::GraphicsController>();
@@ -129,7 +81,6 @@ void MainController::draw() {
     auto graphics = engine::core::Controller::get<engine::graphics::GraphicsController>();
     auto resources = engine::core::Controller::get<engine::resources::ResourcesController>();
 
-    // 0) Ажурирај светло (овај позив мора бити овде, унутар draw-а)
     engine::graphics::lighting::PointLight pl;
     pl.base.color = glm::vec3(1.0f, 0.8f, 0.6f);
     pl.base.ambientIntensity = 0.1f;
@@ -145,21 +96,14 @@ void MainController::draw() {
     m_lighting.renderDepthPass([&](const engine::resources::Shader *depthShader) {
         depthShader->use();
 
-        // 1) Well
-        {
-            glm::vec3 wellPos(-10.0f, -7.0f, 10.0f);
-            glm::mat4 model = glm::translate(glm::mat4(1.0f), wellPos);
-            model = glm::scale(model, glm::vec3(0.2f));
-            depthShader->set_mat4("model", model);
-            resources->model("well")->draw(depthShader);
-        }
-
         // 2) Poles
         {
             std::vector<glm::vec3> polePositions = {
-                    {-8.0f, -7.0f, -5.0f},
-                    {18.0f, -7.0f, -80.0f},
-                    {70.0f, -7.0f, -150.0f}
+                    {-15.0f, -7.0f, 180.0f},
+                    {-15.0f, -7.0f, 150.0f},
+                    {-15.0f, -7.0f, 120.0f},
+                    {-15.0f, -7.0f, 90.0f},
+                    {-15.0f, -7.0f, 60.0f}
             };
             for (auto &pos: polePositions) {
                 glm::mat4 model = glm::translate(glm::mat4(1.0f), pos);
@@ -180,12 +124,17 @@ void MainController::draw() {
         // 4) Trees
         {
             std::vector<glm::vec3> treePositions = {
-                    {26.0f, 3.0f, 0.0f}, {-15.0f, 3.0f, 20.0f}, {30.0f, 3.0f, -10.0f},
-                    {-20.0f, 3.0f, 10.0f}, {26.0f, 3.0f, 10.0f}, {-15.0f, 3.0f, -30.0f},
-                    {16.0f, 1.0f, -30.0f}, {0.0f, 4.0f, -130.0f}, {-2.0f, 4.0f, -100.0f},
-                    {10.0f, 4.0f, -140.0f}, {40.0f, 2.0f, -130.0f}, {38.0f, 1.0f, -100.0f},
-                    {50.0f, 2.0f, -140.0f}, {30.0f, 4.0f, -160.0f}, {40.0f, 4.0f, -190.0f}
+                    // Prvi set
+                    {25.0f, 2.9f, 120.0f},
+                    {30.0f, 3.0f, 100.0f},
+                    {25.0f, 3.0f, 90.0f},
+                    {30.0f, 3.0f, 70.0f},
+                    {25.0f, 3.0f, 30.0f},
+                    {25.0f, 3.0f, 15.0f},
+                    {30.0f, 3.0f, 5.0f},
+                    {25.0f, 3.0f, -20.0f}
             };
+
             for (auto &pos: treePositions) {
                 glm::mat4 model = glm::translate(glm::mat4(1.0f), pos);
                 model = glm::scale(model, glm::vec3(10.0f));
@@ -195,43 +144,32 @@ void MainController::draw() {
             }
         }
 
-        // 5) Cottage
-        {
-            glm::vec3 pos(0.0f, -3.0f, -125.0f);
-            glm::mat4 model = glm::translate(glm::mat4(1.0f), pos);
-            model = glm::rotate(model, 2.0f, glm::vec3(0, 1, 0));
-            model = glm::scale(model, glm::vec3(0.2f));
-            depthShader->set_mat4("model", model);
-            resources->model("cottage")->draw(depthShader);
-        }
-
         // 6) Medieval House
         {
-            glm::vec3 pos(50.0f, -8.0f, -20.0f);
+            glm::vec3 pos(-5.0f, -8.0f, 10.0f);
             glm::mat4 model = glm::translate(glm::mat4(1.0f), pos);
-            model = glm::rotate(model, -4.7f, glm::vec3(0, 1, 0));
-            model = glm::scale(model, glm::vec3(3.0f));
+            model = glm::rotate(model, 0.0f, glm::vec3(0, 0, 0));
+            model = glm::scale(model, glm::vec3(2.0f));
             depthShader->set_mat4("model", model);
             resources->model("medieval_house")->draw(depthShader);
         }
 
-        // 7) Event spawner
-        for (const auto &obj: g_spawned_objects) {
-            const auto &name = obj.name;
-            const auto &pos = obj.position;
-            const auto &rot = obj.rotation;
-            const auto &scale = obj.scale;
-
+        // 7) Cottage
+        {
+            glm::vec3 pos(0.0f, -8.0f, 200.0f);
             glm::mat4 model = glm::translate(glm::mat4(1.0f), pos);
-            model = glm::rotate(model, rot.x, glm::vec3(1, 0, 0));
-            model = glm::rotate(model, rot.y, glm::vec3(0, 1, 0));
-            model = glm::rotate(model, rot.z, glm::vec3(0, 0, 1));
-            model = glm::scale(model, scale);
-
+            model = glm::rotate(model, 0.0f, glm::vec3(0, 0, 0));
+            model = glm::scale(model, glm::vec3(0.1f));
             depthShader->set_mat4("model", model);
-            resources->model(name)->draw(depthShader);
+            resources->model("cottage")->draw(depthShader);
         }
+
+        // 8) Runner
+        draw_mesh(resources->model("police_car"), depthShader,
+                  m_runnerPosition,
+                  glm::vec3(0.0f, glm::radians(180.0f), 0.0f), glm::vec3(0.5f));
     });
+
     m_lighting.endDepthPass();
 
     // umesto glBindFramebuffer(...)
@@ -259,17 +197,13 @@ void MainController::draw() {
         // Pozicija point svetla
         lightShader->set_vec3("lightPos", g_light_pos);
 
-        // 1) Well
-        draw_mesh(resources->model("well"), lightShader,
-                  glm::vec3(-10.0f, -7.0f, 10.0f),
-                  glm::vec3(0.0f),
-                  glm::vec3(0.2f));
-
         // 2) Poles
         std::vector<glm::vec3> polePositions = {
-                {-8.0f, -7.0f, -5.0f},
-                {18.0f, -7.0f, -80.0f},
-                {70.0f, -7.0f, -150.0f}
+                {-15.0f, -7.0f, 180.0f},
+                {-15.0f, -7.0f, 150.0f},
+                {-15.0f, -7.0f, 120.0f},
+                {-15.0f, -7.0f, 90.0f},
+                {-15.0f, -7.0f, 60.0f}
         };
 
         for (auto &pos: polePositions) {
@@ -287,27 +221,14 @@ void MainController::draw() {
         // 4) Trees
         std::vector<glm::vec3> treePositions = {
                 // Prvi set
-                {26.0f, 3.0f, 0.0f},
-                {-15.0f, 3.0f, 20.0f},
-                {30.0f, 3.0f, -10.0f},
-                {-20.0f, 3.0f, 10.0f},
-                {26.0f, 3.0f, 10.0f},
-
-                // Drugi set
-                {-15.0f, 3.0f, -30.0f},
-                {16.0f, 1.0f, -30.0f},
-
-                // Treci set
-                {0.0f, 4.0f, -130.0f},
-                {-2.0f, 4.0f, -100.0f},
-                {10.0f, 4.0f, -140.0f},
-                {40.0f, 2.0f, -130.0f},
-                {38.0f, 1.0f, -100.0f},
-                {50.0f, 2.0f, -140.0f},
-
-                // Cetvrti set
-                {30.0f, 4.0f, -160.0f},
-                {40.0f, 4.0f, -190.0f}
+                {25.0f, 2.9f, 120.0f},
+                {30.0f, 3.0f, 100.0f},
+                {25.0f, 3.0f, 90.0f},
+                {30.0f, 3.0f, 70.0f},
+                {25.0f, 3.0f, 30.0f},
+                {25.0f, 3.0f, 15.0f},
+                {30.0f, 3.0f, 5.0f},
+                {25.0f, 3.0f, -20.0f}
         };
 
         for (auto &pos: treePositions) {
@@ -317,34 +238,31 @@ void MainController::draw() {
                       glm::vec3(10.0f));
         }
 
-        // 5) Cottage
-        draw_mesh(resources->model("cottage"), lightShader,
-                  glm::vec3(0.0f, -3.0f, -125.0f),
-                  glm::vec3(0.0f, 2.0f, 0.0f), glm::vec3(0.2f));
-
         // 6) Medieval House
         draw_mesh(resources->model("medieval_house"), lightShader,
-                  glm::vec3(50.0f, -8.0f, -20.0f),
-                  glm::vec3(0.0f, -4.7f, 0.0f),
-                  glm::vec3(3.0f));
+                  glm::vec3(-5.0f, -8.0f, 10.0f),
+                  glm::vec3(0.0f, 0.0f, 0.0f),
+                  glm::vec3(2.0f));
 
-        for (const auto &obj: g_spawned_objects) {
-            const auto &modelName = obj.name;
-            const auto &pos = obj.position;
-            const auto &rot = obj.rotation;
-            const auto &scale = obj.scale;
+        // 6) Cottage
+        draw_mesh(resources->model("cottage"), lightShader,
+                  glm::vec3(0.0f, -8.0f, 200.0f),
+                  glm::vec3(0.0f, 0.0f, 0.0f),
+                  glm::vec3(0.1f));
 
-            draw_mesh(
-                    resources->model(modelName),
-                    lightShader,
-                    pos,
-                    rot,
-                    scale
-                    );
-        }
+        // 7) Runner
+        draw_mesh(resources->model("police_car"), lightShader,
+                  m_runnerPosition,
+                  glm::vec3(0.0f, glm::radians(180.0f), 0.0f),
+                  glm::vec3(0.5f));
     });
 
     m_lighting.renderLightBulb(g_light_pos, 3.0f);
+
+    if (finishLine >= neg_z && t < maxTime) {
+        update_racer();
+        m_runnerPosition = glm::vec3(0.0f, -7.5f, 185.0f - neg_z);
+    }
 
     // ───── SKYBOX ────────────────────────────────────────────────────────────────────
     draw_skybox();
@@ -392,47 +310,88 @@ void MainController::draw_skybox() {
 }
 
 void MainController::update_camera() {
-    auto gui = engine::core::Controller::get<GUIController>();
+    auto gui = core::Controller::get<GUIController>();
     if (gui->is_enabled()) { return; }
-    auto platform = engine::core::Controller::get<engine::platform::PlatformController>();
-    auto camera = engine::core::Controller::get<engine::graphics::GraphicsController>()->camera();
+
+    auto platform = core::Controller::get<platform::PlatformController>();
+    auto camera = core::Controller::get<graphics::GraphicsController>()->camera();
     float dt = platform->dt();
 
-    // Ako je SHIFT pritisnut, povecaj faktor brzine
-    float speedMultiplier = 2.0f;
-    if (platform->key(engine::platform::KeyId::KEY_LEFT_SHIFT).state() == engine::platform::Key::State::Pressed) { speedMultiplier = 4.0f; }
+    // 1)
+    if (platform->key(platform::KeyId::KEY_L)
+                .state() == platform::Key::State::JustPressed) {
+        m_autoMoveLeft = !m_autoMoveLeft;
+        m_leftMovedDistance = 0.0f;
+    }
 
-    if (platform->key(engine::platform::KEY_W).state() == engine::platform::Key::State::Pressed) { camera->move_camera(engine::graphics::Camera::Movement::FORWARD, dt * speedMultiplier); }
-    if (platform->key(engine::platform::KEY_S).state() == engine::platform::Key::State::Pressed) { camera->move_camera(engine::graphics::Camera::Movement::BACKWARD, dt * speedMultiplier); }
-    if (platform->key(engine::platform::KEY_A).state() == engine::platform::Key::State::Pressed) { camera->move_camera(engine::graphics::Camera::Movement::LEFT, dt * speedMultiplier); }
-    if (platform->key(engine::platform::KEY_D).state() == engine::platform::Key::State::Pressed) { camera->move_camera(engine::graphics::Camera::Movement::RIGHT, dt * speedMultiplier); }
-    // Vertikalno kretanje:
-    if (platform->key(engine::platform::KEY_E).state() == engine::platform::Key::State::Pressed) { camera->move_camera(engine::graphics::Camera::Movement::UP, dt * speedMultiplier); }
-    if (platform->key(engine::platform::KEY_Q).state() == engine::platform::Key::State::Pressed) { camera->move_camera(engine::graphics::Camera::Movement::DOWN, dt * speedMultiplier); }
+    // 2)
+    if (m_autoMoveLeft) {
+        float speedMultiplier = (platform->key(platform::KeyId::KEY_LEFT_SHIFT)
+                                         .state() == platform::Key::State::Pressed)
+                                    ? 4.0f
+                                    : 2.0f;
 
-    auto mouse = platform->mouse();
-    camera->rotate_camera(mouse.dx, mouse.dy);
-    camera->zoom(mouse.scroll);
+        float stepDist = camera->MovementSpeed * dt * speedMultiplier;
+
+        if (m_leftMovedDistance + stepDist >= m_leftTargetDistance) {
+            float remaining = m_leftTargetDistance - m_leftMovedDistance;
+            float remDt = remaining / (camera->MovementSpeed * speedMultiplier);
+            camera->move_camera(graphics::Camera::Movement::LEFT, remDt * speedMultiplier);
+            m_autoMoveLeft = false;
+        } else {
+            camera->move_camera(graphics::Camera::Movement::LEFT, dt * speedMultiplier);
+            m_leftMovedDistance += stepDist;
+        }
+    }
+    // 3)
+    else {
+        float speedMultiplier = 2.0f;
+        if (platform->key(platform::KeyId::KEY_LEFT_SHIFT)
+                    .state() == platform::Key::State::Pressed) { speedMultiplier = 4.0f; }
+
+        if (platform->key(platform::KeyId::KEY_W)
+                    .state() == platform::Key::State::Pressed)
+            camera->move_camera(graphics::Camera::Movement::FORWARD, dt * speedMultiplier);
+        if (platform->key(platform::KeyId::KEY_S)
+                    .state() == platform::Key::State::Pressed)
+            camera->move_camera(graphics::Camera::Movement::BACKWARD, dt * speedMultiplier);
+        if (platform->key(platform::KeyId::KEY_A)
+                    .state() == platform::Key::State::Pressed)
+            camera->move_camera(graphics::Camera::Movement::LEFT, dt * speedMultiplier);
+        if (platform->key(platform::KeyId::KEY_D)
+                    .state() == platform::Key::State::Pressed)
+            camera->move_camera(graphics::Camera::Movement::RIGHT, dt * speedMultiplier);
+        if (platform->key(platform::KeyId::KEY_E)
+                    .state() == platform::Key::State::Pressed)
+            camera->move_camera(graphics::Camera::Movement::UP, dt * speedMultiplier);
+        if (platform->key(platform::KeyId::KEY_Q)
+                    .state() == platform::Key::State::Pressed)
+            camera->move_camera(graphics::Camera::Movement::DOWN, dt * speedMultiplier);
+
+        auto mouse = platform->mouse();
+        camera->rotate_camera(mouse.dx, mouse.dy);
+        camera->zoom(mouse.scroll);
+    }
 }
 
-void MainController::execute_event(const std::string &eventName) {
-    if (eventName == "START_FLICKER") {
-        g_flicker_active = true;
-        g_flicker_active = m_current_time;
-        spdlog::info("EVENT START_FLICKER");
-    } else if (eventName == "STOP_FLICKER") {
-        g_flicker_active = false;
-        g_point_light_intensity = 7.0f;// resetujemo intenzitet
-        spdlog::info("EVENT STOP_FLICKER");
-    } else if (eventName == "SPAWN_MODEL") {
-        g_spawned_objects.emplace_back(
-                "police_car",
-                glm::vec3{0.0f, -8.0f, -3.0f},
-                glm::vec3(0.0f),
-                glm::vec3(1.0f)
-                );
-        spdlog::info("EVENT SPAWN_MODEL: spawnovan tree");
-    } else { spdlog::warn("execute_event: nepoznat event '{}'", eventName); }
+void MainController::update_racer() {
+
+    auto platform = core::Controller::get<platform::PlatformController>();
+    float dt = 0.01;
+
+    double Fd = F + fc * exp(-pow(t / tc, 2)) - fv * v;
+    double At = A * (1.0 - 0.25 * exp(-pow(t / tc, 2)));
+    double D = 0.5 * At * rho * Cd * pow(v - w, 2);
+
+    a = (Fd - D) / m;
+    // Euler step - modified to ensure stability
+    v = v + a * dt;
+    neg_z = neg_z + v * dt;
+    // Next timestep
+    t += dt;
+
+    if (t < maxTime && finishLine < neg_z) { spdlog::info("Car finished race in {:.2f}s", t); } else { spdlog::info("Race over, didn't finish in time ({:.2f}s)", t); }
+
 }
 
 }

@@ -190,7 +190,7 @@ void main()
     vec3 ambientPart = moonAmb * baseCol;
 
     // 2)
-    vec3 dirPart = CalcDirectionalLight(normal).rgb * 0.5 * baseCol;
+    vec3 dirPart = CalcDirectionalLight(normal).rgb * 1.0 * baseCol;
 
     vec3 result = ambientPart + dirPart;
 
@@ -200,7 +200,7 @@ void main()
         vec3 Li = CalcPointLightSmooth(0, normal) * baseCol;
 
         float s0 = shadows ? ShadowCalculationPCF(vLocalPos) : 0.0;
-        
+
         result += Li * (1.0 - s0);
     }
 

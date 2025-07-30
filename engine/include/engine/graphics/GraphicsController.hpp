@@ -174,7 +174,9 @@ namespace engine::graphics {
         OrthographicMatrixParams m_ortho_params{};
 
         glm::mat4 m_projection_matrix{};
-        Camera m_camera{};
+        Camera m_camera{
+            glm::vec3(-30.0f, -4.0f, 185)
+        };
         ImGuiContext *m_imgui_context{};
     };
 

@@ -16,30 +16,8 @@ public:
     bool g_msaa_enabled = true;
 
     // Lighting
-    float g_point_light_intensity = 7.0f;      // Intenzitet point light svetla
-    glm::vec3 g_light_pos{-10.0f, 10.0f, 2.0f};// Pozicija point light svetla
-
-    // ------- Scheduled event --------------------------------------------------------
-    // Za treptanje svetla
-    float g_flicker_duration = 2.0f;
-    bool g_flicker_active = false;
-    float g_flicker_start_time = 0.0f;
-
-    float g_spawn_delay = 3.0f;
-
-    // Spawn-ovani objekti: ime modela + pozicija, rotacija, skala
-    struct SpawnedObject {
-        std::string name;
-        glm::vec3 position;
-        glm::vec3 rotation;// Euler uglovi u radijanima
-        glm::vec3 scale;
-    };
-
-    std::vector<SpawnedObject> g_spawned_objects;
-
-    void execute_event(const std::string &eventName);
-
-    // ---------------------------------------------------------------------------------------
+    float g_point_light_intensity = 20.0f;  // Intenzitet point light svetla
+    glm::vec3 g_light_pos{-5.0f, 7.0f, 182};// Pozicija point light svetla
 
     std::string_view name() const override { return "test::app::MainController"; }
 
@@ -50,12 +28,40 @@ private:
     // Lighting
     engine::graphics::lighting::LightingSystem m_lighting{2048, 2048};
 
-    // Scheduled event
-    engine::core::EventQueue m_event_queue;
+    // SprintSim
+    bool m_autoMoveLeft = false;
+    float m_leftTargetDistance = 160.0f;
+    float m_leftMovedDistance = 0.0f;
 
-    float m_current_time{0.0f};
+    glm::vec3 m_runnerPosition = glm::vec3(0.0f, -7.6f, 185.0f);
 
-    bool m_action_triggered{false};
+    // --- fizički parametri i stanje trkača ---
+    const double m = 80.0;   // kg (mass)
+    const double F = 400.0;  // N (constant driving force)
+    const double rho = 1.293;// kg/m^3 (air density)
+    const double A = 0.45;   // m^2 (cross-sectional area)
+    const double Cd = 1.2;   // drag coefficient
+    const double fv = 25.8;  // N·s/m (velocity dependent force)
+    const double fc = 488.0; // N (initial crouch force)
+    const double tc = 0.67;  // s (characteristic crouch time)
+
+    double finishLine = 165.0f;
+    double maxTime = 60.0f;
+    double neg_z = 0.0;
+    double w = 0.0f;
+    double t = 0.0;
+    double v = 0.0;
+    double a = 0.0;
+
+    double calculateAirResistance(double t, double v, double w);
+
+    double calculateDrivingForce(double t, double v);
+
+    void update_racer();
+
+    void updateModelMatrix();
+
+    // --------------------------------------------------------------------
 
     void initialize() override;
 
@@ -83,6 +89,8 @@ private:
     void draw_skybox();
 
     void update_camera();
+
+    void update_racer(double dt, double maxTime, double w, double finishLine);
 
     float m_backpack_scale{1.0f};
     bool m_draw_gui{false};

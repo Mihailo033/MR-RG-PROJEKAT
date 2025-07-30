@@ -24,7 +24,7 @@ void GUIController::draw() {
 
     ImGui::Begin("Settings");
 
-    ImGui::SliderFloat("Point Light Intensity", &mainCtrl->g_point_light_intensity, 0.0f, 7.0f);
+    ImGui::SliderFloat("Point Light Intensity", &mainCtrl->g_point_light_intensity, 0.0f, 20.0f);
     ImGui::SliderFloat3("Light Position", &mainCtrl->g_light_pos.x,
                         -200.0f, 200.0f,
                         "%.1f");
@@ -35,6 +35,21 @@ void GUIController::draw() {
     ImGui::Checkbox("Enable MSAA", &mainCtrl->g_msaa_enabled);
 
     ImGui::End();
+
+    // Draw camera info
+    ImGui::Begin("Camera info");
+    const auto &c = *camera;
+    ImGui::Text("Camera position: (%f, %f, %f)", c.Position
+                                                  .x, c.Position
+                                                       .y, c.Position
+                                                            .z);
+    ImGui::Text("(Yaw, Pitch): (%f, %f)", c.Yaw, c.Pitch);
+    ImGui::Text("Camera front: (%f, %f, %f)", c.Front
+                                               .x, c.Front
+                                                    .y, c.Front
+                                                         .z);
+    ImGui::End();
+
     graphics->end_gui();
 }
 }
