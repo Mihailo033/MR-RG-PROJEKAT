@@ -172,7 +172,7 @@ void MainController::draw() {
 
     if (finishLine >= neg_z && t < maxTime) {
         update_racer();
-        m_runnerPosition = glm::vec3(0.0f, -7.5f, 185.0f - neg_z);
+        m_runnerPosition = glm::vec3(0.0f, -7.7f, 185.0f - neg_z);
     }
 
     m_lighting.endDepthPass();
@@ -264,7 +264,7 @@ void MainController::draw() {
 
     if (finishLine >= neg_z && t < maxTime) {
         update_racer();
-        m_runnerPosition = glm::vec3(0.0f, -7.5f, 185.0f - neg_z);
+        m_runnerPosition = glm::vec3(0.0f, -7.7f, 185.0f - neg_z);
         g_light_pos = m_runnerPosition + glm::vec3(0.0f, 15.0f, 0.0f);
     }
 

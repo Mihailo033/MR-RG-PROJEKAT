@@ -32,7 +32,7 @@ private:
     float m_leftTargetDistance = 160.0f;
     float m_leftMovedDistance = 0.0f;
 
-    glm::vec3 m_runnerPosition = glm::vec3(0.0f, -7.6f, 185.0f);
+    glm::vec3 m_runnerPosition = glm::vec3(0.0f, -7.7f, 185.0f);
 
     // --- fizički parametri i stanje trkača ---
     const double m = 80.0;   // kg (mass)
@@ -44,7 +44,7 @@ private:
     const double fc = 488.0; // N (initial crouch force)
     const double tc = 0.67;  // s (characteristic crouch time)
 
-    double finishLine = 165.0f;
+    double finishLine = 160.0f;
     double maxTime = 60.0f;
     double neg_z = 0.0;
     double w = 0.0f;
