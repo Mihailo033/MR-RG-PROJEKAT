@@ -69,7 +69,35 @@ void MainController::poll_events() {
     }
 }
 
-void MainController::update() { update_camera(); }
+void MainController::update() {
+    auto platform = engine::core::Controller::get<engine::platform::PlatformController>();
+    auto camera = core::Controller::get<graphics::GraphicsController>()->camera();
+
+    update_camera();
+
+    // samo kad je trka startovana i ako nisi presao cilj ni istekao vreme
+    if (m_raceStarted && finishLine >= neg_z && t < maxTime) {
+        update_racer();
+
+        m_runnerPosition = glm::vec3(0.0f, -7.7f, 185.0f - static_cast<float>(neg_z));
+        g_light_pos = m_runnerPosition + glm::vec3(0.0f, 15.0f, 0.0f);
+    }
+
+    // Enter - startuj simulaciju
+    if (platform->key(platform::KeyId::KEY_ENTER)
+                .state() == platform::Key::State::JustPressed) { m_raceStarted = true; }
+
+    // O = kamera prati auto
+    if (platform->key(platform::KeyId::KEY_O).state() == platform::Key::State::Pressed) { camera->Position = m_runnerPosition + glm::vec3(-20.0f, 5.0f, 0.0f); }
+
+    // R = resetuj simulaciju
+    if (platform->key(platform::KeyId::KEY_R).state() == platform::Key::State::JustPressed) {
+        neg_z = 0.0;
+        t = 0.0;
+        v = 0.0;
+        a = 0.0;
+    }
+}
 
 void MainController::begin_draw() {
     auto *graphics = core::Controller::get<engine::graphics::GraphicsController>();
@@ -258,18 +286,6 @@ void MainController::draw() {
                   glm::vec3(0.5f));
     });
 
-    if (platform->key(platform::KeyId::KEY_ENTER)
-                .state() == platform::Key::State::JustPressed) { m_raceStarted = true; }
-
-    // samo kad je trka startovana i ako nisi prešao cilj ni istekao vreme
-    if (m_raceStarted && finishLine >= neg_z && t < maxTime) {
-        update_racer();
-
-        // pomeri model i svetlo
-        m_runnerPosition = glm::vec3(0.0f, -7.7f, 185.0f - static_cast<float>(neg_z));
-        g_light_pos = m_runnerPosition + glm::vec3(0.0f, 15.0f, 0.0f);
-    }
-
     m_lighting.renderLightBulb(g_light_pos, 3.0f);
 
     // ───── SKYBOX ────────────────────────────────────────────────────────────────────
@@ -328,72 +344,35 @@ void MainController::update_camera() {
     auto camera = core::Controller::get<graphics::GraphicsController>()->camera();
     float dt = platform->dt();
 
-    if (platform->key(platform::KeyId::KEY_O).state() == platform::Key::State::Pressed) { camera->Position = m_runnerPosition + glm::vec3(-20.0f, 5.0f, 0.0f); }
+    float speedMultiplier = 2.0f;
+    if (platform->key(platform::KeyId::KEY_LEFT_SHIFT)
+                .state() == platform::Key::State::Pressed) { speedMultiplier = 4.0f; }
 
-    if (platform->key(platform::KeyId::KEY_R).state() == platform::Key::State::JustPressed) {
-        neg_z = 0.0;
-        t = 0.0;
-        v = 0.0;
-        a = 0.0;
-    }
+    if (platform->key(platform::KeyId::KEY_W)
+                .state() == platform::Key::State::Pressed)
+        camera->move_camera(graphics::Camera::Movement::FORWARD, dt * speedMultiplier);
+    if (platform->key(platform::KeyId::KEY_S)
+                .state() == platform::Key::State::Pressed)
+        camera->move_camera(graphics::Camera::Movement::BACKWARD, dt * speedMultiplier);
+    if (platform->key(platform::KeyId::KEY_A)
+                .state() == platform::Key::State::Pressed)
+        camera->move_camera(graphics::Camera::Movement::LEFT, dt * speedMultiplier);
+    if (platform->key(platform::KeyId::KEY_D)
+                .state() == platform::Key::State::Pressed)
+        camera->move_camera(graphics::Camera::Movement::RIGHT, dt * speedMultiplier);
+    if (platform->key(platform::KeyId::KEY_E)
+                .state() == platform::Key::State::Pressed)
+        camera->move_camera(graphics::Camera::Movement::UP, dt * speedMultiplier);
+    if (platform->key(platform::KeyId::KEY_Q)
+                .state() == platform::Key::State::Pressed)
+        camera->move_camera(graphics::Camera::Movement::DOWN, dt * speedMultiplier);
 
-    // 1)
-    if (platform->key(platform::KeyId::KEY_L)
-                .state() == platform::Key::State::JustPressed) {
-        m_autoMoveLeft = !m_autoMoveLeft;
-        m_leftMovedDistance = 0.0f;
-    }
-
-    // 2)
-    if (m_autoMoveLeft) {
-        float speedMultiplier = (platform->key(platform::KeyId::KEY_LEFT_SHIFT)
-                                         .state() == platform::Key::State::Pressed)
-                                    ? 4.0f
-                                    : 2.0f;
-
-        float stepDist = camera->MovementSpeed * dt * speedMultiplier;
-
-        if (m_leftMovedDistance + stepDist >= m_leftTargetDistance) {
-            float remaining = m_leftTargetDistance - m_leftMovedDistance;
-            float remDt = remaining / (camera->MovementSpeed * speedMultiplier);
-            camera->move_camera(graphics::Camera::Movement::LEFT, remDt * speedMultiplier);
-            m_autoMoveLeft = false;
-        } else {
-            camera->move_camera(graphics::Camera::Movement::LEFT, dt * speedMultiplier);
-            m_leftMovedDistance += stepDist;
-        }
-    }
-    // 3)
-    else {
-        float speedMultiplier = 2.0f;
-        if (platform->key(platform::KeyId::KEY_LEFT_SHIFT)
-                    .state() == platform::Key::State::Pressed) { speedMultiplier = 4.0f; }
-
-        if (platform->key(platform::KeyId::KEY_W)
-                    .state() == platform::Key::State::Pressed)
-            camera->move_camera(graphics::Camera::Movement::FORWARD, dt * speedMultiplier);
-        if (platform->key(platform::KeyId::KEY_S)
-                    .state() == platform::Key::State::Pressed)
-            camera->move_camera(graphics::Camera::Movement::BACKWARD, dt * speedMultiplier);
-        if (platform->key(platform::KeyId::KEY_A)
-                    .state() == platform::Key::State::Pressed)
-            camera->move_camera(graphics::Camera::Movement::LEFT, dt * speedMultiplier);
-        if (platform->key(platform::KeyId::KEY_D)
-                    .state() == platform::Key::State::Pressed)
-            camera->move_camera(graphics::Camera::Movement::RIGHT, dt * speedMultiplier);
-        if (platform->key(platform::KeyId::KEY_E)
-                    .state() == platform::Key::State::Pressed)
-            camera->move_camera(graphics::Camera::Movement::UP, dt * speedMultiplier);
-        if (platform->key(platform::KeyId::KEY_Q)
-                    .state() == platform::Key::State::Pressed)
-            camera->move_camera(graphics::Camera::Movement::DOWN, dt * speedMultiplier);
-
-        auto mouse = platform->mouse();
-        camera->rotate_camera(mouse.dx, mouse.dy);
-        camera->zoom(mouse.scroll);
-    }
+    auto mouse = platform->mouse();
+    camera->rotate_camera(mouse.dx, mouse.dy);
+    camera->zoom(mouse.scroll);
 }
 
+// Pomeranje automobila
 void MainController::update_racer() {
 
     auto platform = core::Controller::get<platform::PlatformController>();
@@ -404,7 +383,7 @@ void MainController::update_racer() {
     double D = 0.5 * At * rho * Cd * pow(v - w, 2);
 
     a = (Fd - D) / m;
-    // Euler step - modified to ensure stability
+    // Euler step
     v = v + a * dt;
     neg_z = neg_z + v * dt;
     // Next timestep
