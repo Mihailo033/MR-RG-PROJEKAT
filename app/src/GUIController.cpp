@@ -68,6 +68,13 @@ void GUIController::draw() {
 
     ImGui::End();
 
+    // Počni novi ImGui prozor
+    ImGui::Begin("Credits");
+    ImGui::Text("Mihailo Radulovic");
+    ImGui::Text("Veljko Jaksic");
+    ImGui::Text("Uros Jovanovic");
+    ImGui::End();
+
     graphics->end_gui();
 }
 }
