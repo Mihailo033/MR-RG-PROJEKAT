@@ -42,21 +42,21 @@ void GUIController::draw() {
     // ----- Simulation Parameters -----
     ImGui::Text("Simulation Parameters");
     ImGui::Separator();
-    ImGui::Text("Mass (m): %.2f kg", mainCtrl->m);
-    ImGui::Text("Drive Force (F): %.2f N", mainCtrl->F);
-    ImGui::Text("Air Density (rho): %.3f kg/m^3", mainCtrl->rho);
-    ImGui::Text("Area (A): %.2f m^2", mainCtrl->A);
-    ImGui::Text("Drag Coefficient (Cd): %.2f", mainCtrl->Cd);
-    ImGui::Text("Viscous Force (fv): %.2f N·s/m", mainCtrl->fv);
-    ImGui::Text("Crouch Force (fc): %.2f N", mainCtrl->fc);
-    ImGui::Text("Crouch Time (tc): %.2f s", mainCtrl->tc);
+    ImGui::InputDouble("Mass (m)", &mainCtrl->m, 1.0, 10.0, "%.2f kg");
+    ImGui::InputDouble("Drive Force (F)", &mainCtrl->F, 10.0, 100.0, "%.2f N");
+    ImGui::InputDouble("Air Density (rho)", &mainCtrl->rho, 0.01, 0.10, "%.3f kg/m^3");
+    ImGui::InputDouble("Area (A)", &mainCtrl->A, 0.10, 1.00, "%.2f m^2");
+    ImGui::InputDouble("Drag Coef (Cd)", &mainCtrl->Cd, 0.01, 0.10, "%.2f");
+    ImGui::InputDouble("Viscous Fric (fv)", &mainCtrl->fv, 1.0, 10.0, "%.2f N·s/m");
+    ImGui::InputDouble("Crouch Force (fc)", &mainCtrl->fc, 10.0, 100.0, "%.2f N");
+    ImGui::InputDouble("Crouch Time (tc)", &mainCtrl->tc, 0.01, 0.10, "%.2f s");
 
     // ----- Race Settings -----
     ImGui::Text("Race Settings");
     ImGui::Separator();
-    ImGui::Text("Finish Line: %.2f m", mainCtrl->finishLine);
-    ImGui::Text("Max Time: %.2f s", mainCtrl->maxTime);
-    ImGui::Text("Wind Speed (w): %.2f m/s", mainCtrl->w);
+    ImGui::InputDouble("Finish Line (m)", &mainCtrl->finishLine, 1.0, 1000.0, "%.2f");
+    ImGui::InputDouble("Max Time (s)", &mainCtrl->maxTime, 1.0, 3600.0, "%.2f");
+    ImGui::InputDouble("Wind Speed (w)", &mainCtrl->w, 0.1, 100.0, "%.2f");
 
     // ----- Simulation State -----
     ImGui::Text("Simulation State");

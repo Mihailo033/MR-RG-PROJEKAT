@@ -21,14 +21,14 @@ public:
     std::string_view name() const override { return "test::app::MainController"; }
 
     // --- fizički parametri i stanje trkača ---
-    const double m = 80.0;   // kg (mass)
-    const double F = 400.0;  // N (constant driving force)
-    const double rho = 1.293;// kg/m^3 (air density)
-    const double A = 0.45;   // m^2 (cross-sectional area)
-    const double Cd = 1.2;   // drag coefficient
-    const double fv = 25.8;  // N·s/m (velocity dependent force)
-    const double fc = 488.0; // N (initial crouch force)
-    const double tc = 0.67;  // s (characteristic crouch time)
+    double m = 80.0;   // kg (mass)
+    double F = 400.0;  // N (constant driving force)
+    double rho = 1.293;// kg/m^3 (air density)
+    double A = 0.45;   // m^2 (cross-sectional area)
+    double Cd = 1.2;   // drag coefficient
+    double fv = 25.8;  // N·s/m (velocity dependent force)
+    double fc = 488.0; // N (initial crouch force)
+    double tc = 0.67;  // s (characteristic crouch time)
 
     double finishLine = 160.0f;
     double maxTime = 15.0f;
@@ -48,6 +48,7 @@ private:
 
     // SprintSim
     bool m_raceStarted = false;
+    bool m_loggedFinish = false;
     bool m_autoMoveLeft = false;
     float m_leftTargetDistance = 160.0f;
     float m_leftMovedDistance = 0.0f;

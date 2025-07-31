@@ -410,8 +410,11 @@ void MainController::update_racer() {
     // Next timestep
     t += dt;
 
-    if (t < maxTime && finishLine < neg_z) { spdlog::info("Car finished race in {:.2f}s", t); } else { spdlog::info("Race over, didn't finish in time ({:.2f}s)", t); }
-
+    if (!m_loggedFinish && (t >= maxTime || neg_z >= finishLine)) {
+        m_loggedFinish = true;
+        if (neg_z >= finishLine) spdlog::info("Auto je zavrsio trku za {:.2f}s", t);
+        else spdlog::info("Trka je gotova, nije bilo dovoljno vremena ({:.2f}s)", t);
+    }
 }
 
 }
