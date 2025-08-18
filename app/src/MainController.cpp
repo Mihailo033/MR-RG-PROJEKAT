@@ -147,8 +147,8 @@ void MainController::draw() {
 
         // 1) Well
         {
-            glm::vec3 wellPos(-10.0f, -7.0f, 10.0f);
-            glm::mat4 model = glm::translate(glm::mat4(1.0f), wellPos);
+            glm::vec3 well_pos(-10.0f, -7.0f, 10.0f);
+            glm::mat4 model = glm::translate(glm::mat4(1.0f), well_pos);
             model = glm::scale(model, glm::vec3(0.2f));
             depthShader->set_mat4("model", model);
             resources->model("well")->draw(depthShader);
@@ -156,12 +156,12 @@ void MainController::draw() {
 
         // 2) Poles
         {
-            std::vector<glm::vec3> polePositions = {
+            std::vector<glm::vec3> pole_positions = {
                     {-8.0f, -7.0f, -5.0f},
                     {18.0f, -7.0f, -80.0f},
                     {70.0f, -7.0f, -150.0f}
             };
-            for (auto &pos: polePositions) {
+            for (auto &pos: pole_positions) {
                 glm::mat4 model = glm::translate(glm::mat4(1.0f), pos);
                 model = glm::scale(model, glm::vec3(2.0f));
                 depthShader->set_mat4("model", model);
@@ -179,14 +179,14 @@ void MainController::draw() {
 
         // 4) Trees
         {
-            std::vector<glm::vec3> treePositions = {
+            std::vector<glm::vec3> tree_positions = {
                     {26.0f, 3.0f, 0.0f}, {-15.0f, 3.0f, 20.0f}, {30.0f, 3.0f, -10.0f},
                     {-20.0f, 3.0f, 10.0f}, {26.0f, 3.0f, 10.0f}, {-15.0f, 3.0f, -30.0f},
                     {16.0f, 1.0f, -30.0f}, {0.0f, 4.0f, -130.0f}, {-2.0f, 4.0f, -100.0f},
                     {10.0f, 4.0f, -140.0f}, {40.0f, 2.0f, -130.0f}, {38.0f, 1.0f, -100.0f},
                     {50.0f, 2.0f, -140.0f}, {30.0f, 4.0f, -160.0f}, {40.0f, 4.0f, -190.0f}
             };
-            for (auto &pos: treePositions) {
+            for (auto &pos: tree_positions) {
                 glm::mat4 model = glm::translate(glm::mat4(1.0f), pos);
                 model = glm::scale(model, glm::vec3(10.0f));
                 model = glm::rotate(model, -80.0f, glm::vec3(0, 0, 1));
@@ -266,13 +266,13 @@ void MainController::draw() {
                   glm::vec3(0.2f));
 
         // 2) Poles
-        std::vector<glm::vec3> polePositions = {
+        std::vector<glm::vec3> pole_positions = {
                 {-8.0f, -7.0f, -5.0f},
                 {18.0f, -7.0f, -80.0f},
                 {70.0f, -7.0f, -150.0f}
         };
 
-        for (auto &pos: polePositions) {
+        for (auto &pos: pole_positions) {
             draw_mesh(resources->model("pole"), lightShader,
                       pos,
                       glm::vec3(0.0f),
@@ -285,7 +285,7 @@ void MainController::draw() {
                   glm::vec3(0.0f), glm::vec3(3.0f));
 
         // 4) Trees
-        std::vector<glm::vec3> treePositions = {
+        std::vector<glm::vec3> tree_positions = {
                 // Prvi set
                 {26.0f, 3.0f, 0.0f},
                 {-15.0f, 3.0f, 20.0f},
@@ -310,7 +310,7 @@ void MainController::draw() {
                 {40.0f, 4.0f, -190.0f}
         };
 
-        for (auto &pos: treePositions) {
+        for (auto &pos: tree_positions) {
             draw_mesh(resources->model("tree"), lightShader,
                       pos,
                       glm::vec3(0.0f, 0.0f, -80.0f),
@@ -358,6 +358,11 @@ void MainController::end_draw() {
     engine::core::Controller::get<engine::platform::PlatformController>()->swap_buffers();
 }
 
+void MainController::terminate() {
+    if (m_msaa) m_msaa.reset();
+    g_spawned_objects.clear();
+}
+
 // USER DEFINED
 // ---------------------------------------------------------------------------------------------------------------------------
 
@@ -399,8 +404,8 @@ void MainController::update_camera() {
     float dt = platform->dt();
 
     // Ako je SHIFT pritisnut, povecaj faktor brzine
-    float speedMultiplier = 2.0f;
-    if (platform->key(engine::platform::KeyId::KEY_LEFT_SHIFT).state() == engine::platform::Key::State::Pressed) { speedMultiplier = 4.0f; }
+    float speed_multiplier = 2.0f;
+    if (platform->key(engine::platform::KeyId::KEY_LEFT_SHIFT).state() == engine::platform::Key::State::Pressed) { speed_multiplier = 4.0f; }
 
     if (platform->key(engine::platform::KEY_W).state() == engine::platform::Key::State::Pressed) { camera->move_camera(engine::graphics::Camera::Movement::FORWARD, dt * speedMultiplier); }
     if (platform->key(engine::platform::KEY_S).state() == engine::platform::Key::State::Pressed) { camera->move_camera(engine::graphics::Camera::Movement::BACKWARD, dt * speedMultiplier); }

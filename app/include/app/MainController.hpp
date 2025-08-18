@@ -59,6 +59,8 @@ private:
 
     void initialize() override;
 
+    void terminate() override;
+
     bool loop() override;
 
     void poll_events() override;
