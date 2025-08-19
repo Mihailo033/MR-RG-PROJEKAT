@@ -1,11 +1,48 @@
 {
   "resources": {
     "models": {
+      "backpack": {
+        "path": "backpack/backpack.obj",
+        "flip_uvs": false
+      },
+      "light_bulb": {
+        "path": "light_bulb/light_bulb.fbx",
+        "flip_uvs": false
+      },
+      "terrain": {
+        "path": "terrain/Terrain.obj",
+        "flip_uvs": true
+      },
+      "tree": {
+        "path": "tree/raw2.obj",
+        "flip_uvs": true
+      },
+      "pole": {
+        "path": "pole/poste_01.obj",
+        "flip_uvs": true
+      },
+      "police_car": {
+        "path": "police_car/police_car.obj",
+        "flip_uvs": true
+      },
+      "cottage": {
+        "path": "cottage/old_house.obj",
+        "flip_uvs": true
+      },
+      "medieval_house": {
+        "path": "medieval_house/medieval.obj",
+        "flip_uvs": true
+      },
+      "well": {
+        "path": "well/well_low.obj",
+        "flip_uvs": true
+      }
     }
   },
   "window": {
-    "height": 600,
-    "title": "Hello, window!",
-    "width": 800
+    "width": 1600,
+    "height": 900,
+    "title": "Park Road",
+    "fullscreen": false
   }
 }

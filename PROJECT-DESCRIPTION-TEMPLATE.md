@@ -1,48 +1,58 @@
-# {NAME-OF-THE-PROJECT}
+# Park Road
 
-{INDEX} - {STUDENT-FULL-NAME}  
-{PROJECT DESCRIPTION}
+mi22105 - Mihailo Radulović
+
+- Park Road je 3D interaktivna scena razvijena u C++ i OpenGL-u, korišćenjem modularnog engine-a.
 
 ## Controls
 
-{BUTTON1} -> {ACTION1}  
-{BUTTON2} -> {ACTION2}  
-...  
-{BUTTONN} -> {ACTIONN}
+- **W/A/S/D** — kretanje kamere napred, levo, nazad, desno
+- **SHIFT** - ubrzavanje kretanja kamere
+- **E / Q** — vertikalno kretanje kamere (gore / dole)
+- **Miš** — rotacija kamere
+- **L** — pokretanje EVENT-a
+- **F1** — toggluje prikaz kursora
+- **F2** — otvara/zatvara GUI prozor
 
 ## Features
 
 ### Fundamental:
 
-[ ] Model with lighting
-[ ] Two types of lighting with customizable colors and movement through GUI or ACTIONS
-[ ] {ACTION_X} --- AFTER_M_SECONDS---Triggers---> {EVENT_A} ---> AFTER_N_SECONDS---Triggers---> {EVENT_B}
+[X] Model with lighting  
+[X] Two types of lighting with customizable colors and movement through GUI or ACTIONS
+[X] {ACTION_X} --- AFTER_M_SECONDS---Triggers---> {EVENT_A} ---> AFTER_N_SECONDS---Triggers---> {EVENT_B}
 
 ### Group A:
 
 [ ] Frame-buffers with post-processing   
 [ ] Instancing  
-[ ] Off-screen Anti-Aliasing  
+[X] Off-screen Anti-Aliasing  
 [ ] Parallax Mapping
 
 ### Group B:
+
 [ ] Bloom with the use of HDR  
 [ ] Deferred Shading  
-[ ] Point Shadows  
+[X] Point Shadows  
 [ ] SSAO
 
 ### Engine improvement:
 
-[ ] ...
+Lighting sistem, point shadows, MSAA, model spawning sistem, itd.
 
 ## Models:
 
-[link1]   
-[link2]
+- Trees: https://skfb.ly/onxWu
+- Light pole: https://skfb.ly/oQCFT
+- Medieval house: https://skfb.ly/6RyOR
+- Old cottage: https://skfb.ly/6GvrB
+- Well: https://skfb.ly/6WWQF
+- Police car: https://skfb.ly/6RrGy
 
 ## Textures
 
-[link1]  
-[link2]
+Nisu korišćene dodatne teksture.
 
-{OTHER-RESOURCES}
+## Skybox
+
+- [Dark skybox](https://assetstorev1-prd-cdn.unity3d.com/package-screenshot/16490b61-a907-4aad-90e4-d6e2c7dd8c5a_scaled.jpg)
